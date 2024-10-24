@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>ReWrite</title>
+        <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Signika:wght@400;700&display=swap" rel="stylesheet">
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+        <style>
+            body {
+                margin: 0;
+                height: 100vh;
+                background-color: #f0f0f0;
+            }
+            .title {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                font-size: 36px;
+                margin:0;
+                font-family: 'Anton', sans-serif;
+                font-weight: bold;
+            }
+
+            label {
+                display: block;
+                margin-bottom: 5px;
+                font-size: 20px;
+                color: black;
+                font-weight: bold;
+                font-family: 'Anton', sans-serif;
+                text-align: center;
+            }
+
+            caption {
+                font-weight: bold;
+                margin-bottom: 10px;
+                font-size: 20px;
+                font-family: 'Anton', sans-serif;
+                color: black;
+            }
+
+            .explanation {
+                margin-top: 20px;
+                font-size: 12px;
+                font-family: 'Signika', sans-serif;
+                font-weight: bold;
+                color: black;
+                text-align: center;
+            }
+
+            .container {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 60px;
+                height: calc(100vh - 60px);
+            }
+            .left-section {
+                width: 65%;
+                height: 100%;
+                overflow-y: auto;
+                padding: 10px;
+                box-sizing: border-box;
+            }
+            .right-section {
+                width: 30%;
+                height: 80%;
+                padding: 10px;
+            }
+            
+            .table-chart-container {
+                display: flex;
+                justify-content: space-between;
+                height: 100%;
+            }
+            .chart-container {
+                width: 50%;
+                display: flex;
+                justify-content: center;
+                height: 100%;
+            }  
+
+
+            textarea.source-text {
+                width: 100%;
+                height: auto;
+                min-height: 100px;
+                max-height: 300px;
+                margin-bottom: 10px;
+                padding: 5px;
+
+                border: 2px solid #ccc;
+                border-radius: 10px;
+
+                font-size: 15px;
+                font-family: "Comic Sans MS", cursive, sans-serif;
+                color: black;
+
+                overflow: auto;
+            }
+            textarea.essay-prompt {
+                width: 100%;
+                height: auto;
+                min-height: 50px;
+                max-height: 100px;
+                margin-bottom: 10px;
+                padding: 5px;
+
+                border: 2px solid #ccc;
+                border-radius: 10px;
+
+                font-size: 15px;
+                font-family: "Caveat", cursive;
+                color: black;
+
+                overflow: auto;
+            }
+            textarea.response-box {
+                width: 100%;
+                height: auto;
+                min-height: 400px;
+                max-height: 800px;
+                margin-bottom: 10px;
+                padding: 5px;
+
+                border: 2px solid #ccc;
+                border-radius: 10px;
+                
+                font-size: 15px;
+                font-family: 'Courier New', Courier, monospace;
+
+                overflow: auto;
+            }
+            .submit-button {
+                width: 100%;
+                height: 50px;
+                padding: 5px;
+                margin-bottom: 10px;
+
+                background-color: lightblue;
+
+                border: 3px solid;
+                border-radius: 10px;
+
+                font-size: 20px;
+                color: black;
+                font-weight: bold;
+                font-family: 'Anton', sans-serif;
+                text-align: center;
+            }
+
+            .refresh-button {
+                width: 100%;
+                height: 50px;
+                padding: 5px;
+                margin-bottom: 20px;
+                /* margin-top: 20px; */
+
+                background-color: lightblue;
+
+                border: 3px solid;
+                border-radius: 10px;
+
+                font-size: 20px;
+                color: black;
+                font-weight: bold;
+                font-family: 'Anton', sans-serif;
+                text-align: center;
+
+            }
+
+            .submit-button:hover {
+                background-color: deepskyblue;
+            }
+
+            .refresh-button:hover {
+                background-color: deepskyblue;
+            }
+
+            table {
+                width: 35%;
+                padding: 5px;
+                margin-bottom: 10px;
+
+                border-collapse: collapse;
+                border-radius: 10px;
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+
+                font-family: 'Signika', sans-serif;
+            }
+            th, td {
+                /* border: 1px solid black; */
+                /* border-radius: 10px; */
+                padding: 10px;
+                text-align: center;
+            }
+
+            td {
+                color: #333;
+                font-size: 30px;
+            }
+
+            th {
+                font-size: 18px;
+                font-weight: bold;
+                /* background-color: #333; */
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+
+            tr:nth-child(1) th, tr:nth-child(1) td {
+                background-color: lightcoral;
+            }
+            tr:nth-child(2) th, tr:nth-child(2) td {
+                background-color: lightgreen;
+            }
+            tr:nth-child(3) th, tr:nth-child(3) td {
+                background-color: lightblue;
+            }
+            tr:nth-child(4) th, tr:nth-child(4) td {
+                background-color: pink;
+            }
+            tr:nth-child(5) th, tr:nth-child(5) td {
+                background-color: lightsalmon;
+            }
+
+        </style>
+    </head>
+    <body>
+
+        <h1 class="title">ReWrite</h1>
+
+        
+
+        <div class="container">
+            <div class="left-section">
+                    <label for="source-input">STEP 1: Enter Source Text</label>
+                    <textarea class="source-text" id="source-input" placeholder="Source Text."></textarea>
+
+                    <label for="essay-input">STEP 2: Enter Essay Prompt</label>
+                    <textarea class="essay-prompt" id="essay-input" placeholder="Essay Prompt."></textarea>
+
+                    <!-- <label for="sub-but"></label> -->
+                    <button class="submit-button" id="sub-but">STEP 3: Submit to ReWrite</button>
+
+                    <label for="response">STEP 4: Edit Essay</label>
+                    <textarea class="response-box" id="response-input" placeholder="ReWrite's Response"></textarea>
+            </div>
+            
+            
+
+            <div class="right-section">
+                <!-- <label for="refresh-but"></label> -->
+                <button class="refresh-button" id="refresh-but">STEP 5: Evaluate Essay</button> 
+                <div class="table-chart-container">
+                    <table>
+                        <caption id="table-title">Flags 🚩</caption>
+                        <tr>
+                            <th>Clarify!</th>
+                            <td id="clarify">0</td>
+                        </tr>
+                        <tr>
+                            <th>Organize!</th>
+                            <td id="organize">0</td>
+                        </tr>
+                        <tr>
+                            <th>Fact-Check!</th>
+                            <td id="fact-check">0</td>
+                        </tr>
+                        <tr>
+                            <th>Exemplify!</th>
+                            <td id="exemplify">0</td>
+                        </tr>
+                            <th>Simplify!</th>
+                            <td id="simplify">0</td>
+                        </tr>
+                    </table>
+                    <div class="chart-container">
+                        <svg id="bar-chart" width="100%" height="100%">
+                            <!-- <image href="images/human.png" x="140" y="0" width="80" height="80"/>
+                            <image href="images/robot.png" x="140" y="220" width="80" height="80"/> -->
+                        </svg>
+                    </div>
+                </div>
+                <div class="explanation">
+                    <p>⭐ Address each flag to increase your score and sound more like a human! ⭐</p>
+                </div>
+                
+            </div>
+        </div>
+        
+
+
+
+        <script>
+        document.getElementById('sub-but').addEventListener('click', function() {
+            const sourceText = document.getElementById('source-input').value;
+            const essayPrompt = document.getElementById('essay-input').value;
+
+            fetch('/rewrite', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    source_text: sourceText,
+                    essay_prompt: essayPrompt
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('response-input').value = data.response;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+
+
+        
+        document.getElementById('refresh-but').addEventListener('click', function() {
+            const essay = document.getElementById('response-input').value;
+
+            fetch('/clarify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    essay: essay
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Assuming the response has the flags in a certain format
+                document.getElementById('clarify').innerText = data.number_of_unclear_sentences;
+
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+        
+            
+
+        var chartHeight = document.querySelector('.chart-container').clientHeight;
+        var margin = {top: 20, right: 20, bottom: 30, left: 40};
+        var width = document.getElementById("bar-chart").clientWidth - margin.left - margin.right;
+        var height = chartHeight - margin.top - margin.bottom;
+
+        // Create an SVG container
+        var svg = d3.select("#bar-chart")
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        // Data for the bar chart
+        var data = [80];
+
+        // Create X scale
+        var xScale = d3.scaleBand()
+            .domain(data.map(function(d, i) { return i; }))
+            .range([0, width])
+            .padding(0.4);
+
+        // Create Y scale
+        var yScale = d3.scaleLinear()
+            .domain([0, 100])
+            .range([height, 0]);
+
+        // Append the Y axis
+        svg.append("g")
+            .call(d3.axisLeft(yScale).ticks(5).tickFormat(d3.format(".0f")));
+
+        // Append the bars
+        svg.selectAll(".bar")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("class", "bar")
+            .attr("x", function(d, i) { return xScale(i); })
+            .attr("y", function(d) { return yScale(d); })
+            .attr("width", xScale.bandwidth())
+            .attr("height", function(d) { return height - yScale(d); })
+            .attr("fill", "steelblue");
+
+        // Add value labels on top of the bars
+        svg.selectAll(".label")
+            .data(data)
+            .enter()
+            .append("text")
+            .attr("class", "label")
+            .attr("x", function(d, i) { return xScale(i) + xScale.bandwidth() / 2; })
+            .attr("y", function(d) { return yScale(d) + 15; })
+            .attr("text-anchor", "middle")
+            .attr("font-size", "14px")
+            .attr("font-weight", "bold")
+            .attr("font-family", "'Signika', sans-serif")
+            .attr("fill", "black")
+            .text(function(d) { return d + "%"; });
+
+        // Add title to the chart
+        svg.append("text")
+            .attr("x", (width / 2))
+            .attr("y", -5)
+            .attr("text-anchor", "middle")
+            .attr("font-size", "16px")
+            .attr("font-weight", "bold")
+            .attr("font-family", "'Anton', sans-serif")
+            .text("Robo-Meter 🤖");
+            
+        </script>
+    </body>
+</html>
