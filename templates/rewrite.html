@@ -7,6 +7,8 @@
         <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Signika:wght@400;700&display=swap" rel="stylesheet">
         <script src="https://d3js.org/d3.v7.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/diff@5.0.0/dist/diff.min.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
         <style>
             body {
                 margin: 0;
@@ -68,19 +70,37 @@
                 height: 80%;
                 padding: 10px;
             }
+            .step-4-container {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                justify-content: center;
+            }
+
+            .step-4-container label {
+                /* flex: 1; */
+                margin: 0;
+            }
             
             .table-chart-container {
                 display: flex;
                 justify-content: space-between;
-                height: 100%;
+                height: 50%;
+
             }
             .chart-container {
-                width: 50%;
+                width: 100%;
                 display: flex;
                 justify-content: center;
                 height: 100%;
             }  
 
+            .edit-table {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                height: 100%;
+            }
 
             textarea.source-text {
                 width: 100%;
@@ -116,7 +136,7 @@
 
                 overflow: auto;
             }
-            textarea.response-box {
+            .response-box {
                 width: 100%;
                 height: auto;
                 min-height: 400px;
@@ -168,19 +188,42 @@
                 font-family: 'Anton', sans-serif;
                 text-align: center;
 
+                word-wrap: break-word;
+                white-space: normal;
+                overflow: hidden;
+
+                flex-shrink: 0;
+
             }
 
+            .toggle-button {
+                /* width: 100%; */
+                height: 50px;
+                padding: 5px;
+                margin-bottom: 10px;
+
+                background-color: lightblue;
+
+                border: 3px solid;
+                border-radius: 10px;
+
+                font-size: 20px;
+                color: black;
+                font-weight: bold;
+                font-family: 'Anton', sans-serif;
+                text-align: center;
+            }
+
+            .toggle-button:hover,
+            .refresh-button:hover,
             .submit-button:hover {
                 background-color: deepskyblue;
             }
 
-            .refresh-button:hover {
-                background-color: deepskyblue;
-            }
-
             table {
-                width: 35%;
+                width: 100%;
                 padding: 5px;
+                max-width: 600px;
                 margin-bottom: 10px;
 
                 border-collapse: collapse;
@@ -202,87 +245,244 @@
             }
 
             th {
-                font-size: 18px;
+                font-size: 16px;
                 font-weight: bold;
                 /* background-color: #333; */
                 text-transform: uppercase;
                 letter-spacing: 1px;
             }
+            /* First Row Elements (Clarify and Assert) */
+            #flag-summary-table tr:nth-child(1) th:nth-child(1), #flag-summary-table tr:nth-child(1) td:nth-child(2) {
+                background-color: lightcoral; /* Clarify */
+            }
 
-            tr:nth-child(1) th, tr:nth-child(1) td {
+            #flag-summary-table tr:nth-child(1) th:nth-child(3), #flag-summary-table tr:nth-child(1) td:nth-child(4) {
+                background-color: lightgreen; /* Assert */
+            }
+
+            /* Second Row Elements (Fact-Check and Exemplify) */
+            #flag-summary-table tr:nth-child(2) th:nth-child(1), #flag-summary-table tr:nth-child(2) td:nth-child(2) {
+                background-color: lightblue; /* Fact-Check */
+            }
+
+            #flag-summary-table tr:nth-child(2) th:nth-child(3), #flag-summary-table tr:nth-child(2) td:nth-child(4) {
+                background-color: pink; /* Exemplify */
+            }
+
+            /* Third Row Element (Simplify) */
+            #flag-summary-table tr:nth-child(3) th:nth-child(1), #flag-summary-table tr:nth-child(3) td:nth-child(2) {
+                background-color: lightsalmon; /* Simplify */
+            }
+
+            /* Container to make the edit-table scrollable */
+            .edit-table-container {
+                max-height: 300px; /* Adjust height as needed */
+                overflow-y: auto; /* Add vertical scroll when content overflows */
+                border: 1px solid #ccc; /* Optional: border for visual clarity */
+                border-radius: 10px; /* Optional: rounded corners */
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: subtle shadow */
+            }
+
+            /* Ensure the table within the container takes full width */
+            #edit-table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            #edit-table th, #edit-table td {
+                padding: 10px;
+                text-align: center;
+                font-size: 10px; /* Adjust font size to fit within scrollable view */
+                border-bottom: 1px solid black;
+            }
+
+            #edit-table th {
+                background-color: #e0e0e0; /* Light gray for headers */
+                position: sticky; /* Keep header visible while scrolling */
+                top: 0; /* Required for sticky positioning */
+                z-index: 1; /* Ensure header is above table content */
+                border-bottom: 2px solid black;
+            }
+
+            #edit-table tbody tr:hover {
+                background-color: white; /* Highlight row on hover for better visibility */
+            }
+            #edit-table tbody tr:last-child td {
+                border-bottom: none; /* Remove border from the last row for a cleaner finish */
+            }
+            
+            .highlight-row {
+                background-color: white;
+                transition: background-color 0.3s ease;
+            }
+
+            .clarify_row, .clarify_highlight {
                 background-color: lightcoral;
             }
-            tr:nth-child(2) th, tr:nth-child(2) td {
+            .assert_row, .assert_highlight {
                 background-color: lightgreen;
             }
-            tr:nth-child(3) th, tr:nth-child(3) td {
+            .factcheck_row, .factcheck_highlight {
                 background-color: lightblue;
             }
-            tr:nth-child(4) th, tr:nth-child(4) td {
+            .exemplify_row, .exemplify_highlight {
                 background-color: pink;
             }
-            tr:nth-child(5) th, tr:nth-child(5) td {
+            .simplify_row, .simplify_highlight {
                 background-color: lightsalmon;
             }
+            
+            .clarify_highlight,
+            .assert_highlight,
+            .factcheck_highlight,
+            .exemplify_highlight,
+            .simplify_highlight {
+                position: relative;
+                cursor: pointer;
+                font-weight: bold;
+                display: inline;
+                white-space: nowrap;
+            }
 
+            .tooltip-content {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: #fff;
+                border: 1px solid #ccc;
+                padding: 5px;
+                border-radius: 5px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                z-index: 1001;
+                font-size: 12px;
+                text-align: left;
+                white-space: normal;
+                max-width: 500px;
+                word-wrap: break-word;
+            }
+            
+            .tooltip-check {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                font-size: 10px;
+                color: #555;
+            }
+            .tooltip-check input[type="checkbox"] {
+                margin: 0;
+            }
+            .tooltip-check label {
+                font-size: 12px;
+                margin: 0;
+            }
+
+            .tooltip-text {
+                font-size: 12px; /* Ensure tooltip text is readable */
+                color: #000; /* Standard color for tooltip content */
+            }
+
+            .clarify_highlight:hover .tooltip-content,
+            .assert_highlight:hover .tooltip-content,
+            .factcheck_highlight:hover .tooltip-content,
+            .exemplify_highlight:hover .tooltip-content,
+            .simplify_highlight:hover .tooltip-content {
+                display: block;
+            }
+
+            .edit-completed {
+                background-color: #f0f0f0;
+                color: black;
+                text-decoration: none;
+            }
+            
         </style>
     </head>
     <body>
 
         <h1 class="title">ReWrite</h1>
-
         
-
         <div class="container">
+
+            <!-- Left Section: Text Inputs & Initial Actions -->
             <div class="left-section">
+
+                    <!-- Source Text Input -->
                     <label for="source-input">STEP 1: Enter Source Text</label>
                     <textarea class="source-text" id="source-input" placeholder="Source Text."></textarea>
 
+                    <!-- Essay Prompt Input -->
                     <label for="essay-input">STEP 2: Enter Essay Prompt</label>
                     <textarea class="essay-prompt" id="essay-input" placeholder="Essay Prompt."></textarea>
 
-                    <!-- <label for="sub-but"></label> -->
+                    <!-- Submit Button -->
                     <button class="submit-button" id="sub-but">STEP 3: Submit to ReWrite</button>
 
-                    <label for="response">STEP 4: Edit Essay</label>
-                    <textarea class="response-box" id="response-input" placeholder="ReWrite's Response"></textarea>
+                    <!-- Response Section -->
+                    <div class="step-4-container">
+                        <label for="response">STEP 4: Edit Essay</label>
+                        <button class="toggle-button" id="highlight-toggle"><i class="fas fa-eye"></i> Show Your Edits!</button>
+                    </div>
+                    <div class="response-box" id="response-input" contenteditable="true">ReWrite's Response</div>
+
             </div>
             
             
-
+            <!-- Right Section: Evaluation & Feedback -->
             <div class="right-section">
-                <!-- <label for="refresh-but"></label> -->
-                <button class="refresh-button" id="refresh-but">STEP 5: Evaluate Essay</button> 
+
+                <!-- Refresh Button -->
+                <button class="refresh-button" id="refresh-but">STEP 5: Evaluate Essay</button>
+
                 <div class="table-chart-container">
-                    <table>
-                        <caption id="table-title">Flags 🚩</caption>
+
+                    <!-- Flag Summary Table -->
+                    <table id="flag-summary-table">
+                        <caption id="table-title">Flag Summary 🚩</caption>
                         <tr>
-                            <th>Clarify!</th>
-                            <td id="clarify">0</td>
+                            <th class="clarify">Clarify!</th>
+                            <td id="clarify" class="clarify">0</td>
+                            <th class="assert">ASSERT!</th>
+                            <td id="assert" class="assert">0</td>
                         </tr>
                         <tr>
-                            <th>Organize!</th>
-                            <td id="organize">0</td>
+                            <th class="fact-check">Fact-Check!</th>
+                            <td id="fact-check" class="fact-check">0</td>
+                            <th class="exemplify">Exemplify!</th>
+                            <td id="exemplify" class="exemplify">0</td>
                         </tr>
                         <tr>
-                            <th>Fact-Check!</th>
-                            <td id="fact-check">0</td>
-                        </tr>
-                        <tr>
-                            <th>Exemplify!</th>
-                            <td id="exemplify">0</td>
-                        </tr>
-                            <th>Simplify!</th>
-                            <td id="simplify">0</td>
+                            <th class="simplify" colspan="2">Simplify!</th>
+                            <td id="simplify" class="simplify" colspan="2">0</td>
                         </tr>
                     </table>
+
+                    <!-- Bar Chart -->
                     <div class="chart-container">
-                        <svg id="bar-chart" width="100%" height="100%">
-                            <!-- <image href="images/human.png" x="140" y="0" width="80" height="80"/>
-                            <image href="images/robot.png" x="140" y="220" width="80" height="80"/> -->
-                        </svg>
+                        <svg id="bar-chart" width="100%" height="100%"></svg>
                     </div>
+                    
                 </div>
+                <div class="edit-table-container">
+
+                    <!-- Flag Tracker Table -->
+                    <table id="edit-table">
+                        <caption id="table-title">Flag Tracker 📋</caption>
+                        <thead>
+                            <tr>
+                                <th>Evaluation #</th>
+                                <th>Category</th>
+                                <th>Context</th>
+                                <th>Suggested Fix</th>
+                                <th>Completed</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                
+                <!-- Explanatory Message -->
                 <div class="explanation">
                     <p>⭐ Address each flag to increase your score and sound more like a human! ⭐</p>
                 </div>
@@ -291,13 +491,30 @@
         </div>
         
 
-
-
         <script>
+
+        // Event Listener for the Submit Button
         document.getElementById('sub-but').addEventListener('click', function() {
+
+            // Retrieve input values (source text and essay prompt)
             const sourceText = document.getElementById('source-input').value;
             const essayPrompt = document.getElementById('essay-input').value;
+            const submitButton = document.getElementById('sub-but');
 
+            // Validation check
+            if (!sourceText || !essayPrompt) {
+                console.log("Error: sourceText or essayPrompt are empty.");
+                alert("Please fill out both the source text and the essay prompt.");
+                return;
+            }
+
+            // Loading feedback to user (locks evaluate button to prevent multiple submissions)
+            submitButton.innerText = 'Loading...';
+            submitButton.disabled = true;
+            document.getElementById('response-input').innerText = "Loading...";
+
+            // Send a POST request to /rewrite
+            // Request contains the source text and essay prompt
             fetch('/rewrite', {
                 method: 'POST',
                 headers: {
@@ -308,106 +525,553 @@
                     essay_prompt: essayPrompt
                 })
             })
+
+            // Handle server response
+            // Parses JSON response, updates response box, and saves the response
             .then(response => response.json())
             .then(data => {
-                document.getElementById('response-input').value = data.response;
+                document.getElementById('response-input').innerText = data.response;
+                window.initialEssay = data.response;
+                window.userEditedEssay = data.response;
+
+                // Reset submit button
+                submitButton.innerText = 'STEP 3: Submit to ReWrite';
+                submitButton.disabled = false;
             })
+
+            // Error handling
             .catch(error => {
                 console.error('Error:', error);
+                submitButton.innerText = 'STEP 3: Submit to ReWrite';
+                submitButton.disabled = false;
             });
         });
 
+        // Adds a new flag to the Flag Tracker table
+        function addEditToTable(evaluation, category, context, suggestion, completed) {
 
-        
+            // Fetches the table body element inside the edit table
+            const tableBody = document.getElementById('edit-table').querySelector('tbody');
+            
+            // Create a new table row
+            const row = document.createElement('tr');
+
+            // Generate a unique ID and adds the ID attribute to the row
+            const uniqueId = `edit-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            row.setAttribute('data-highlight-id', uniqueId);
+
+            // Create different categories for different CSS styling
+            const categoryClass = category.toLowerCase() + "_row";
+            row.classList.add(categoryClass);
+
+            // Set content of the new row
+            row.innerHTML = `
+                <td>${evaluation}</td> 
+                <td>${category}</td>
+                <td>"${context}"</td>
+                <td>${suggestion}</td>
+                <td>${completed ? 'Yes' : 'No'}</td>
+            `;
+
+            // Add the new row to the table body and return the unique ID
+            tableBody.appendChild(row);
+            return uniqueId;
+        }
+
+        function toggleCompletion(checkbox) {
+
+            const parentHighlight = checkbox.closest(".simplify_highlight, .clarify_highlight, .assert_highlight, .factcheck_highlight, .exemplify_highlight");
+            const highlightClass = parentHighlight.classList;
+            console.log("Highlight Classes:", highlightClass);
+
+            // Get the unique highlight ID
+            const highlightId = parentHighlight.dataset.highlightId;
+
+            let categoryId = "";
+
+            if (highlightClass.contains("simplify_highlight")) {
+                categoryId = "simplify";
+            } else if (highlightClass.contains("clarify_highlight")) {
+                categoryId = "clarify";
+            } else if (highlightClass.contains("assert_highlight")) {
+                categoryId = "assert";
+            } else if (highlightClass.contains("factcheck_highlight")) {
+                categoryId = "fact-check";
+            } else if (highlightClass.contains("exemplify_highlight")) {
+                categoryId = "exemplify";
+            }
+
+            if (categoryId) {
+                const countElement = document.getElementById(categoryId);
+                let currentCount = parseInt(countElement.innerText, 10) || 0;
+
+                if (checkbox.checked) {
+                    currentCount = Math.max(0, currentCount - 1);
+                    parentHighlight.classList.add("edit-completed");
+                } else {
+                    currentCount += 1;
+                    parentHighlight.classList.remove("edit-completed");
+                }
+
+                countElement.innerText = currentCount;
+            }
+
+            if (checkbox.checked) {
+                parentHighlight.classList.add("edit-completed");
+            } else {
+                parentHighlight.classList.remove("edit-completed");
+            }
+
+            const tableRow = document.querySelector(`#edit-table tbody tr[data-highlight-id="${highlightId}"]`);
+            if (tableRow) {
+                const statusCell = tableRow.querySelector('td:last-child');
+                statusCell.textContent = checkbox.checked ? 'Yes' : 'No';
+            }
+
+            }
+
+        // Links the highlighted text element to the corresponding row in the flag tracker table
+        function applyHoverEffectToHighlight(highlightElement, highlightId) {
+            
+            // Ensure the hover effect is added once per element
+            if (!highlightElement.dataset.hoverBound) {
+                
+                // When the user hovers over the highlight
+                highlightElement.addEventListener('mouseenter', () => {
+
+                    // Find the row with the matching ID attribute
+                    const tableRow = document.querySelector(`#edit-table tbody tr[data-highlight-id="${highlightId}"]`);
+                    
+                    // If the matching ID is found, scroll it into view and highlight the row
+                    if (tableRow) {
+                        tableRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        tableRow.classList.add('highlight-row');
+                    }
+                });
+
+                // When the user stops hovering over the highlight
+                highlightElement.addEventListener('mouseleave', () => {
+                    const tableRow = document.querySelector(`#edit-table tbody tr[data-highlight-id="${highlightId}"]`);
+                    
+                    // Remove the highlight from the row
+                    if (tableRow) {
+                        tableRow.classList.remove('highlight-row');
+                    }
+                });
+
+                // To prevent attaching another event listener in the future
+                highlightElement.dataset.hoverBound = 'true';
+            }
+        }
+
+
+
+        let evaluateClickCount = 0;
+
         document.getElementById('refresh-but').addEventListener('click', function() {
-            const essay = document.getElementById('response-input').value;
+            evaluateClickCount++;
 
-            fetch('/clarify', {
+            const responseBox = document.getElementById('response-input');
+            const sourceBox = document.getElementById('source-input');
+            const refreshButton = document.getElementById('refresh-but');
+
+            if (!responseBox.innerText.trim() || responseBox.innerText.trim() === "ReWrite's Response") {
+                console.log("Error: No essay to evaluate.");
+                alert("Please generate a response first.");
+                return;
+            }
+
+            const essay = responseBox.innerText;
+            const source_text = sourceBox.innerText;
+
+            refreshButton.innerText = 'Loading...';
+            refreshButton.disabled = true;
+
+            let highlightedText = essay;
+
+            let simplifyNumber, exemplifyNumber, factCheckNumber, assertNumber, clarifyNumber;
+
+            const editsToAnalyze = evaluateClickCount === 1 ? essay : getOutstandingEdits();
+
+            function getOutstandingEdits() {
+                return Array.from(document.querySelectorAll('#edit-table tbody tr'))
+                    .filter(row => row.querySelector('td:last-child').textContent === 'No')
+                    .map(row => row.querySelector('td:nth-child(2)').textContent)
+                    .join('. ');
+            }
+
+            // SIMPLIFY
+            fetch('/simplify', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    essay: essay
-                })
+                headers: {'Content-Type': 'application/json' },
+                body: JSON.stringify({essay: editsToAnalyze})
             })
             .then(response => response.json())
             .then(data => {
-                // Assuming the response has the flags in a certain format
-                document.getElementById('clarify').innerText = data.number_of_unclear_sentences;
+                console.log("SIMPLIFY");
+                console.log(data.simplify_number);
+                simplifyNumber = data.simplify_number;
+                // document.getElementById('simplify').innerText = data.simplify_number;
 
+                data.simplify_context.forEach((word, index) => {
+                    const wordRegex = new RegExp(`\\b${word}\\b(?!</span>)`, 'gi');
+                    const suggestion = data.simplify_suggestion[index] || "Consider simplifying this word.";
+                    const highlightId = addEditToTable(evaluateClickCount, 'Simplify', word, suggestion, false);
+
+                    highlightedText = highlightedText.replace(wordRegex,
+                        // `<span class="simplify_highlight" data-highlight-id="${highlightId}">${word}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span><span class="tooltip-text"><span class="suggestion-text">${suggestion}</span></span></span></span>`
+                        `<span class="simplify_highlight" data-highlight-id="${highlightId}">${word}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span></span></span>`
+                    );
+                });
+            }) // End of SIMPLIFY fetch and .then chain
+
+            // EXEMPLIFY
+            .then(() => { // Start EXEMPLIFY fetch chain
+                return fetch('/exemplify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ essay: editsToAnalyze})
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("EXEMPLIFY");
+                console.log(data.exemplify_number);
+                exemplifyNumber = data.exemplify_number;
+                // document.getElementById('exemplify').innerText = data.exemplify_number;
+
+                data.exemplify_context.forEach((phrase, index) => {
+                    const phraseRegex = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+                    const suggestion = data.exemplify_suggestion[index] || "Consider adding an example here.";
+                    const reasoning = data.exemplify_reasoning[index] || "No reasoning provided.";
+                    const highlightId = addEditToTable(evaluateClickCount, 'Exemplify', phrase, suggestion, false);
+
+                    highlightedText = highlightedText.replace(phraseRegex,
+                        // `<span class="exemplify_highlight" data-highlight-id="${highlightId}">${phrase}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span><span class="tooltip-text"><span class="suggestion-text">${suggestion}</span><button class="dropdown-toggle" onclick="toggleDropdown(this)">Details ▼</button><span class="dropdown-content" style="display: none;">${reasoning}</span></span></span></span>`
+                        `<span class="exemplify_highlight" data-highlight-id="${highlightId}">${phrase}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span></span></span>`
+                    );
+                });
+            }) // End of EXEMPLIFY fetch and .then chain
+
+            // FACTCHECK
+            .then(() => { // Start FACTCHECK fetch chain
+                return fetch('/factcheck', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json'},
+                    body: JSON.stringify({ essay: editsToAnalyze, source_text: source_text})
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("FACTCHECK");
+                console.log(data.factcheck_number);
+                factCheckNumber = data.factcheck_number;
+                // document.getElementById('fact-check').innerText = data.factcheck_number;
+
+                data.factcheck_context.forEach((phrase, index) => {
+                    const phraseRegex = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+                    const suggestion = "This doesn't appear to be supported by the source text. Double check for accuracy.";
+                    const reasoning = data.factcheck_reasoning[index] || "No reasoning provided.";
+                    const highlightId = addEditToTable(evaluateClickCount, 'Factcheck', phrase, suggestion, false);
+
+                    highlightedText = highlightedText.replace(phraseRegex,
+                        // `<span class="factcheck_highlight" data-highlight-id="${highlightId}">${phrase}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span><span class="tooltip-text"><span class="suggestion-text">${suggestion}</span><button class="dropdown-toggle" onclick="toggleDropdown(this)">Details ▼</button><span class="dropdown-content" style="display: none;">${reasoning}</span></span></span></span>`
+                        `<span class="factcheck_highlight" data-highlight-id="${highlightId}">${phrase}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span></span></span>`
+                    );
+                });
+            }) // End of FACTCHECK fetch and .then chain
+
+            // ASSERT
+            .then(() => { // Start ASSERT fetch chain
+                return fetch('/assert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json'},
+                    body: JSON.stringify({essay: editsToAnalyze})
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("ASSERT");
+                console.log(data.assert_number);
+                assertNumber = data.assert_number;
+                // document.getElementById('assert').innerText = data.assert_number;
+
+                data.assert_context.forEach((phrase, index) => {
+                    const phraseRegex = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+                    const suggestion = data.assert_suggestion[index] || "Consider strengthening your claim.";
+                    const reasoning = data.assert_reasoning[index] || "No reasoning provided.";
+                    const highlightId = addEditToTable(evaluateClickCount, 'Assert', phrase, suggestion, false);
+
+                    highlightedText = highlightedText.replace(phraseRegex,
+                        // `<span class="assert_highlight" data-highlight-id="${highlightId}">${phrase}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span><span class="tooltip-text"><span class="suggestion-text">${suggestion}</span><button class="dropdown-toggle" onclick="toggleDropdown(this)">Details ▼</button><span class="dropdown-content" style="display: none;">${reasoning}</span></span></span></span>`
+                        `<span class="assert_highlight" data-highlight-id="${highlightId}">${phrase}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span></span></span>`
+                    );
+                });
+
+            }) // End of ASSERT fetch and .then chain
+
+            // CLARIFY
+            .then(() => { // Start CLARIFY fetch chain
+                return fetch('/clarify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json'},
+                    body: JSON.stringify({essay: editsToAnalyze})
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("CLARIFY");
+                console.log(data.clarify_number);
+                clarifyNumber = data.clarify_number;
+                // document.getElementById('clarify').innerText = data.clarify_number;
+
+                data.clarify_context.forEach((phrase, index) => {
+                    const phraseRegex = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+                    const suggestion = data.clarify_suggestion[index] || "Consider clarifying this part.";
+                    const reasoning = data.clarify_reasoning[index] || "No reasoning provided.";
+                    const highlightId = addEditToTable(evaluateClickCount, 'Clarify', phrase, suggestion, false);
+
+                    highlightedText = highlightedText.replace(phraseRegex,
+                        // `<span class="clarify_highlight" data-highlight-id="${highlightId}">${phrase}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span><span class="tooltip-text"><span class="suggestion-text">${suggestion}</span><button class="dropdown-toggle" onclick="toggleDropdown(this)">Details ▼</button><span class="dropdown-content" style="display: none;">${reasoning}</span></span></span></span>`
+                        `<span class="clarify_highlight" data-highlight-id="${highlightId}">${phrase}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span></span></span>`
+                    );
+                });
+
+                responseBox.innerHTML = highlightedText.replace(/\n/g, '<br>');
+                window.highlightedEssay = responseBox.innerHTML;
+                window.userEditedEssay = responseBox.innerHTML;
+
+                document.querySelectorAll('.simplify_highlight, .exemplify_highlight, .factcheck_highlight, .assert_highlight, .clarify_highlight').forEach(span => {
+                    const highlightId = span.getAttribute('data-highlight-id');
+                    applyHoverEffectToHighlight(span, highlightId);
+                });
+
+                document.getElementById('simplify').innerText = simplifyNumber;
+                document.getElementById('exemplify').innerText = exemplifyNumber;
+                document.getElementById('fact-check').innerText = factCheckNumber;
+                document.getElementById('assert').innerText = assertNumber;
+                document.getElementById('clarify').innerText = clarifyNumber;
+
+                refreshButton.innerText = 'STEP 5: Evaluate Essay';
+                refreshButton.disabled = false;
             })
             .catch(error => {
                 console.error('Error:', error);
+                refreshButton.innerText = 'STEP 5: Evaluate Essay';
+                refreshButton.disabled = false;
             });
+
         });
+
+
+//         document.addEventListener('DOMContentLoaded', function () {
+//     // Toggle button logic - switches between user edit highlights and refresh-but highlights
+//     let highlightToggle = false;
+
+//     document.getElementById('highlight-toggle').addEventListener('click', function () {
+
+//         if (typeof window.initialEssay === 'undefined' || typeof window.userEditedEssay === 'undefined' || typeof window.highlightedEssay === 'undefined') {
+//             console.error("Error: initialEssay, userEditedEssay, or highlightedEssay is undefined.");
+//             alert("Please have ReWrite write and evaluate the essay first.");
+//             return;
+//         }
+
+//         const responseBox = document.getElementById('response-input');
+//         const toggleButton = document.getElementById('highlight-toggle');
+
+//         // Helper function to strip HTML tags
+//         function stripHTML(html) {
+//             const tempDiv = document.createElement("div");
+//             tempDiv.innerHTML = html;
+//             return tempDiv.textContent || tempDiv.innerText || "";
+//         }
+        
+//         if (!highlightToggle) {
+//             // First toggle: Show user edit highlights only, remove refresh-but highlights
+
+//             // Strip HTML tags only for diff comparison
+//             const strippedEditedText = stripHTML(window.userEditedEssay).split('\n').map(paragraph => paragraph.trim());
+//             const strippedOriginalText = stripHTML(window.initialEssay).split('\n').map(paragraph => paragraph.trim());
+
+//             // Process the original HTML structure in userEditedEssay for display with highlights
+//             const editedTextWithHTML = window.userEditedEssay.split('\n').map(paragraph => paragraph.trim());
+
+//             responseBox.innerHTML = ''; // Clear response box for clean highlight application
+
+//             // Process each paragraph to show only user edit highlights
+//             editedTextWithHTML.forEach((paragraphHTML, index) => {
+//                 const originalParagraph = strippedOriginalText[index] || '';
+//                 const editedParagraph = strippedEditedText[index] || '';
+
+//                 const paragraphDiv = document.createElement('div'); // Preserve paragraph structure
+
+//                 // Compare stripped original and edited text, but apply highlights to original HTML
+//                 const diff = Diff.diffWords(originalParagraph, editedParagraph);
+//                 let htmlIndex = 0;
+
+//                 diff.forEach(part => {
+//                     const span = document.createElement('span');
+
+//                     if (part.added) {
+//                         // Highlight only user edits in yellow
+//                         span.style.backgroundColor = 'yellow';
+//                     }
+
+//                     // Get corresponding HTML portion from userEditedEssay based on diff part length
+//                     const htmlPortion = paragraphHTML.slice(htmlIndex, htmlIndex + part.value.length);
+//                     span.innerHTML = htmlPortion; // Use original HTML structure
+
+//                     htmlIndex += part.value.length;
+//                     paragraphDiv.appendChild(span);
+//                 });
+
+//                 responseBox.appendChild(paragraphDiv); // Append processed paragraph to responseBox
+//             });
+
+//             toggleButton.textContent = "Show ReWrite's edits";
+//         } else {
+//             // Second toggle: Restore all refresh-but highlights from `window.highlightedEssay`
+//             responseBox.innerHTML = window.highlightedEssay; // Display the full highlighted HTML structure
+
+//             toggleButton.textContent = "Show Your Edits";
+//         }
+
+//         // Toggle the state
+//         highlightToggle = !highlightToggle;
+//     });
+// });
+
+
+
+
+
         
             
 
-        var chartHeight = document.querySelector('.chart-container').clientHeight;
-        var margin = {top: 20, right: 20, bottom: 30, left: 40};
-        var width = document.getElementById("bar-chart").clientWidth - margin.left - margin.right;
-        var height = chartHeight - margin.top - margin.bottom;
+        // Store the evolving data points for each metric
+        let metricsData = {
+            Clarify: [0],
+            Assert: [0],
+            FactCheck: [0],
+            Exemplify: [0],
+            Simplify: [0]
+        };
 
-        // Create an SVG container
-        var svg = d3.select("#bar-chart")
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        let editCount = 0; // Tracks the number of edits (time)
 
-        // Data for the bar chart
-        var data = [80];
+        // Function to update the chart data
+        function updateChartData() {
+            editCount++;
 
-        // Create X scale
-        var xScale = d3.scaleBand()
-            .domain(data.map(function(d, i) { return i; }))
-            .range([0, width])
-            .padding(0.4);
+            // Get the latest values from the table
+            metricsData.Clarify.push(parseInt(document.getElementById('clarify').textContent));
+            metricsData.Assert.push(parseInt(document.getElementById('assert').textContent));
+            metricsData.FactCheck.push(parseInt(document.getElementById('fact-check').textContent));
+            metricsData.Exemplify.push(parseInt(document.getElementById('exemplify').textContent));
+            metricsData.Simplify.push(parseInt(document.getElementById('simplify').textContent));
 
-        // Create Y scale
-        var yScale = d3.scaleLinear()
-            .domain([0, 100])
-            .range([height, 0]);
+            drawChart();
+        }
 
-        // Append the Y axis
-        svg.append("g")
-            .call(d3.axisLeft(yScale).ticks(5).tickFormat(d3.format(".0f")));
+        function drawChart() {
+            // Clear existing SVG content before re-rendering
+            d3.select("#bar-chart").selectAll("*").remove();
 
-        // Append the bars
-        svg.selectAll(".bar")
-            .data(data)
-            .enter()
-            .append("rect")
-            .attr("class", "bar")
-            .attr("x", function(d, i) { return xScale(i); })
-            .attr("y", function(d) { return yScale(d); })
-            .attr("width", xScale.bandwidth())
-            .attr("height", function(d) { return height - yScale(d); })
-            .attr("fill", "steelblue");
+            var chartHeight = document.querySelector('.chart-container').clientHeight;
+            var margin = {top: 20, right: 20, bottom: 30, left: 60};
+            var width = document.getElementById("bar-chart").clientWidth - margin.left - margin.right;
+            var height = chartHeight - margin.top - margin.bottom;
 
-        // Add value labels on top of the bars
-        svg.selectAll(".label")
-            .data(data)
-            .enter()
-            .append("text")
-            .attr("class", "label")
-            .attr("x", function(d, i) { return xScale(i) + xScale.bandwidth() / 2; })
-            .attr("y", function(d) { return yScale(d) + 15; })
-            .attr("text-anchor", "middle")
-            .attr("font-size", "14px")
-            .attr("font-weight", "bold")
-            .attr("font-family", "'Signika', sans-serif")
-            .attr("fill", "black")
-            .text(function(d) { return d + "%"; });
+            // Create an SVG container
+            var svg = d3.select("#bar-chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        // Add title to the chart
-        svg.append("text")
-            .attr("x", (width / 2))
-            .attr("y", -5)
-            .attr("text-anchor", "middle")
-            .attr("font-size", "16px")
-            .attr("font-weight", "bold")
-            .attr("font-family", "'Anton', sans-serif")
-            .text("Robo-Meter 🤖");
+            // X scale: Time (number of edits)
+            var xScale = d3.scaleLinear()
+                .domain([0, editCount]) // Number of edits so far
+                .range([0, width]);
+
+            // Y scale: Metric values
+            var yScale = d3.scaleLinear()
+                .domain([0, d3.max(Object.values(metricsData).flat())]) // Max value from all metrics
+                .range([height, 0]);
+
+            // Append the Y axis
+            svg.append("g")
+                .call(d3.axisLeft(yScale).ticks(5));
+
+            // Define custom colors for each metric
+            const colorMap = {
+                Clarify: "#F08080",
+                Assert: "#90EE90",
+                FactCheck: "#ADD8E6",
+                Exemplify: "#FFC0CB",
+                Simplify: "#FFA07A",
+            };
+
+            // Draw lines and circles for each metric
+            Object.keys(metricsData).forEach((key) => {
+                svg.append("path")
+                    .datum(metricsData[key])
+                    .attr("fill", "none")
+                    .attr("stroke", colorMap[key]) // Use custom color
+                    .attr("stroke-width", 3) // Increased line width
+                    .attr("d", d3.line()
+                        .x((d, index) => xScale(index)) // Index is the edit time
+                        .y(d => yScale(d)) // Metric value
+                    );
+
+                // Add circles at each data point
+                svg.selectAll(".circle-" + key)
+                    .data(metricsData[key])
+                    .enter()
+                    .append("circle")
+                    .attr("cx", (d, index) => xScale(index))
+                    .attr("cy", d => yScale(d))
+                    .attr("r", 4) // Circle radius
+                    .attr("fill", colorMap[key]); // Use custom color
+            });
+
+            // Add title
+            svg.append("text")
+                .attr("x", (width / 2))
+                .attr("y", -5)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("font-family", "'Anton', sans-serif")
+                .text("Flag Tracker");
+        }
+
+
+
+        // Set up a MutationObserver to detect changes in the table cells
+        const tableObserver = new MutationObserver((mutationsList) => {
+            for (let mutation of mutationsList) {
+                if (mutation.type === 'characterData' || mutation.type === 'childList') {
+                    updateChartData();
+                    break; // Update once per batch of mutations
+                }
+            }
+        });
+
+        // Observe changes in the specific table cells
+        ['clarify', 'assert', 'fact-check', 'exemplify', 'simplify'].forEach(id => {
+            const targetNode = document.getElementById(id);
+            tableObserver.observe(targetNode, { characterData: true, childList: true, subtree: true });
+        });
+
+        // Initial chart draw
+        drawChart();
+
+
+
+
+
             
         </script>
     </body>
