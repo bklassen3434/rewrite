@@ -9,6 +9,26 @@
         <script src="https://d3js.org/d3.v7.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/diff@5.0.0/dist/diff.min.js"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+        <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+	    <script src="http://code.jquery.com/jquery-migrate-1.0.0.js"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='/lib/rangy/rangy-core.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='/polyfills.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='/ice.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='/dom.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='/icePlugin.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='/icePluginManager.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='/IceAddTitlePlugin.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='/IceEmdashPlugin.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='/IceCopyPastePlugin.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='/bookmark.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='/selection.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='/lib/tinymce/jscripts/tiny_mce/tiny_mce.js') }}"></script>
+
+
+
+
+
         <style>
             body {
                 margin: 0;
@@ -140,15 +160,15 @@
                 width: 100%;
                 height: auto;
                 min-height: 400px;
-                max-height: 800px;
+                /* max-height: 800px;
                 margin-bottom: 10px;
-                padding: 5px;
+                padding: 5px; */
 
                 border: 2px solid #ccc;
-                border-radius: 10px;
+                /* border-radius: 10px; */
                 
-                font-size: 15px;
-                font-family: 'Courier New', Courier, monospace;
+                /* font-size: 15px;
+                font-family: 'Courier New', Courier, monospace; */
 
                 overflow: auto;
             }
@@ -317,19 +337,29 @@
             }
 
             .clarify_row, .clarify_highlight {
-                background-color: lightcoral;
+                /* background-color: lightcoral; */
+                background-color: rgba(240, 128, 128, 0.8);
             }
             .assert_row, .assert_highlight {
-                background-color: lightgreen;
+                /* background-color: lightgreen; */
+                background-color: rgba(144, 238, 144, 0.8);
             }
             .factcheck_row, .factcheck_highlight {
-                background-color: lightblue;
+                /* background-color: lightblue; */
+                background-color: rgba(173, 216, 230, 0.8);
             }
             .exemplify_row, .exemplify_highlight {
-                background-color: pink;
+                /* background-color: pink; */
+                background-color: rgba(255, 182, 193, 0.8);
             }
             .simplify_row, .simplify_highlight {
-                background-color: lightsalmon;
+                /* background-color: lightsalmon; */
+                background-color: rgba(255, 160, 122, 0.8);
+            }
+
+            .highlight-span {
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                position: relative;
             }
             
             .clarify_highlight,
@@ -424,7 +454,7 @@
                         <label for="response">STEP 4: Edit Essay</label>
                         <button class="toggle-button" id="highlight-toggle"><i class="fas fa-eye"></i> Show Your Edits!</button>
                     </div>
-                    <div class="response-box" id="response-input" contenteditable="true">ReWrite's Response</div>
+                    <div class="response-box" id="response-input" contenteditable="true"><p>ReWrite's Response</p></div>
 
             </div>
             
@@ -447,8 +477,8 @@
                             <td id="assert" class="assert">0</td>
                         </tr>
                         <tr>
-                            <th class="fact-check">Fact-Check!</th>
-                            <td id="fact-check" class="fact-check">0</td>
+                            <th class="factcheck">Fact-Check!</th>
+                            <td id="factcheck" class="factcheck">0</td>
                             <th class="exemplify">Exemplify!</th>
                             <td id="exemplify" class="exemplify">0</td>
                         </tr>
@@ -493,6 +523,18 @@
 
         <script>
 
+
+
+        function wrapTextNodesInBlockElements(element) {
+            Array.from(element.childNodes).forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
+                    const p = document.createElement('p');
+                    p.textContent = node.textContent.trim();
+                    element.replaceChild(p, node);
+                }
+            });
+        }
+
         // Event Listener for the Submit Button
         document.getElementById('sub-but').addEventListener('click', function() {
 
@@ -511,7 +553,11 @@
             // Loading feedback to user (locks evaluate button to prevent multiple submissions)
             submitButton.innerText = 'Loading...';
             submitButton.disabled = true;
-            document.getElementById('response-input').innerText = "Loading...";
+            // document.getElementById('response-input').innerText = "Loading...";
+            const responseInput = document.getElementById('response-input');
+
+            // responseInput.innerText = "Loading...";
+            responseInput.innerHTML = "<p>Loading...</p>";
 
             // Send a POST request to /rewrite
             // Request contains the source text and essay prompt
@@ -530,13 +576,42 @@
             // Parses JSON response, updates response box, and saves the response
             .then(response => response.json())
             .then(data => {
-                document.getElementById('response-input').innerText = data.response;
-                window.initialEssay = data.response;
-                window.userEditedEssay = data.response;
+                // document.getElementById('response-input').innerText = data.response;
+                // responseInput.innerText = data.response || "<p>Default response content</p>";
+
+                responseInput.innerHTML = data.response || "<p>Default response content</p>";
+
+                wrapTextNodesInBlockElements(responseInput);
+
+                if (!responseInput.firstChild) {
+                    console.warn("responseInput is empty. Adding a default <p> node.");
+                    responseInput.innerHTML = "<p>Default response content</p>";
+                }
 
                 // Reset submit button
                 submitButton.innerText = 'STEP 3: Submit to ReWrite';
                 submitButton.disabled = false;
+                if (!responseInput || !(responseInput instanceof Node) || !responseInput.firstChild) {
+                    console.error("Invalid responseInput. Skipping ICE Editor initialization.");
+                    return;
+                }
+
+                try {
+                    var editor = new ice.InlineChangeEditor({
+                        element: responseInput,
+                    });
+                    console.log("Starting to track changes.");
+                    editor.startTracking();
+
+                    editor.onChange(function (change) {
+                        console.log("Detected change:", change);
+                    });
+
+                } catch (error) {
+                    console.error("Error starting to track changes:", error);
+                }
+
+
             })
 
             // Error handling
@@ -547,400 +622,301 @@
             });
         });
 
-        // Adds a new flag to the Flag Tracker table
-        function addEditToTable(evaluation, category, context, suggestion, completed) {
+        window.addEventListener("load", function () {
+    console.log("ice.PluginManager:", typeof ice.PluginManager !== "undefined" ? ice.PluginManager : "Not defined");
+});
 
-            // Fetches the table body element inside the edit table
-            const tableBody = document.getElementById('edit-table').querySelector('tbody');
-            
-            // Create a new table row
-            const row = document.createElement('tr');
 
-            // Generate a unique ID and adds the ID attribute to the row
-            const uniqueId = `edit-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-            row.setAttribute('data-highlight-id', uniqueId);
 
-            // Create different categories for different CSS styling
-            const categoryClass = category.toLowerCase() + "_row";
-            row.classList.add(categoryClass);
 
-            // Set content of the new row
-            row.innerHTML = `
-                <td>${evaluation}</td> 
-                <td>${category}</td>
-                <td>"${context}"</td>
-                <td>${suggestion}</td>
-                <td>${completed ? 'Yes' : 'No'}</td>
-            `;
 
-            // Add the new row to the table body and return the unique ID
-            tableBody.appendChild(row);
-            return uniqueId;
-        }
+        document.getElementById('refresh-but').addEventListener('click', async function () {
 
-        function toggleCompletion(checkbox) {
+                const responseBox = document.getElementById('response-input');
+                // const sourceBox = document.getElementById('source-input');
+                const refreshButton = document.getElementById('refresh-but');
 
-            const parentHighlight = checkbox.closest(".simplify_highlight, .clarify_highlight, .assert_highlight, .factcheck_highlight, .exemplify_highlight");
-            const highlightClass = parentHighlight.classList;
-            console.log("Highlight Classes:", highlightClass);
-
-            // Get the unique highlight ID
-            const highlightId = parentHighlight.dataset.highlightId;
-
-            let categoryId = "";
-
-            if (highlightClass.contains("simplify_highlight")) {
-                categoryId = "simplify";
-            } else if (highlightClass.contains("clarify_highlight")) {
-                categoryId = "clarify";
-            } else if (highlightClass.contains("assert_highlight")) {
-                categoryId = "assert";
-            } else if (highlightClass.contains("factcheck_highlight")) {
-                categoryId = "fact-check";
-            } else if (highlightClass.contains("exemplify_highlight")) {
-                categoryId = "exemplify";
-            }
-
-            if (categoryId) {
-                const countElement = document.getElementById(categoryId);
-                let currentCount = parseInt(countElement.innerText, 10) || 0;
-
-                if (checkbox.checked) {
-                    currentCount = Math.max(0, currentCount - 1);
-                    parentHighlight.classList.add("edit-completed");
-                } else {
-                    currentCount += 1;
-                    parentHighlight.classList.remove("edit-completed");
+                if (!responseBox.innerText.trim() || responseBox.innerText.trim() === "ReWrite's Response") {
+                    console.log("Error: No essay to evaluate.");
+                    alert("Please generate a response first.");
+                    return;
                 }
 
-                countElement.innerText = currentCount;
+                const essay = responseBox.innerText;
+                // const sourceText = sourceBox.innerText;
+
+                refreshButton.innerText = 'Loading...';
+                refreshButton.disabled = true;
+
+                let highlightedText = essay;
+                const stats = {
+                    simplify: 0,
+                    exemplify: 0,
+                    factcheck: 0,
+                    assert: 0,
+                    clarify: 0,
+                };
+
+                // Utility function for fetch operations
+                async function fetchEdits(endpoint, type, payload) {
+                    try {
+                        const response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload),
+                        });
+                        const data = await response.json();
+
+                        // stats[type] = data[`${type}_number`];
+                        (data[`${type}_context`] || []).forEach((phrase, index) => {
+
+                            // const startIndex = essay.indexOf(phrase);
+                            // const endIndex = startIndex + phrase.length;
+
+                            // Normalize both the essay and the phrase
+                            const normalizedEssay = normalizeText(essay);
+                            const normalizedPhrase = normalizeText(phrase);
+
+                            // Find the index of the normalized phrase in the normalized essay
+                            const startIndex = normalizedEssay.indexOf(normalizedPhrase);
+                            const endIndex = startIndex + normalizedPhrase.length;
+
+                            if (startIndex === -1) {
+                                console.warn(`Phrase "${phrase}" not found in text.`);
+                                return;
+                            }
+                            // const phraseRegex = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+                            const suggestion = data[`${type}_suggestion`][index] || `No suggestion for this ${type} edit.`;
+                            const reasoning = data[`${type}_reasoning`][index] || `No reasoning for this ${type} edit.`;
+                            // const highlightId = addEditToTable(evaluateClickCount, type.charAt(0).toUpperCase() + type.slice(1), phrase, suggestion, false);
+                            const edit = {
+                                type,
+                                phrase,
+                                suggestion,
+                                reasoning,
+                                startIndex,
+                                endIndex,
+                                completed: false,
+                            };
+
+                            // highlightedText = highlightedText.replace(
+                            //     phraseRegex,
+                            //     `<span class="${type}_highlight highlight-span" data-type="${type}" data-highlight-id="${highlightId}" data-suggestion="${suggestion}" data-reasoning="${reasoning}" data-start-index="${startIndex}" data-end-index="${endIndex}">${phrase}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span></span></span>`
+                            // );
+
+                            // Push edit to the backend database
+                            storeEditInBackend(edit);
+                        });
+                    } catch (error) {
+                        console.error(`Error during ${type} fetch:`, error);
+                    }
+                }
+
+                async function storeEditInBackend(edit) {
+                    try {
+                        const response = await fetch('http://127.0.0.1:5000/store-edits', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ edits: [edit] }),
+                        });
+
+                        const data = await response.json();
+                        // console.log('Edit successfully stored:', data);
+                    } catch (error) {
+                        console.error('Error storing edit in backend:', error);
+                    }
+                }
+
+            async function fetchStoredEdits() {
+                try {
+                    const response = await fetch('http://127.0.0.1:5000/get-edits', {
+                        method: 'GET',
+                    });
+
+                    const data = await response.json();
+                    // console.log(data.edits);
+                    return data.edits;
+                } catch (error) {
+                    console.error('Error fetching stored edits:', error);
+                    return [];
+                }
             }
 
-            if (checkbox.checked) {
-                parentHighlight.classList.add("edit-completed");
-            } else {
-                parentHighlight.classList.remove("edit-completed");
-            }
+            async function updateTable(storedEdits) {
 
-            const tableRow = document.querySelector(`#edit-table tbody tr[data-highlight-id="${highlightId}"]`);
-            if (tableRow) {
-                const statusCell = tableRow.querySelector('td:last-child');
-                statusCell.textContent = checkbox.checked ? 'Yes' : 'No';
-            }
+                const categoryCounts = storedEdits.reduce((counts, edit) => {
+                    counts[edit.type] = (counts[edit.type] || 0) + 1;
+                    return counts;
+                }, {});
 
-            }
+                console.log(categoryCounts);
 
-        // Links the highlighted text element to the corresponding row in the flag tracker table
-        function applyHoverEffectToHighlight(highlightElement, highlightId) {
-            
-            // Ensure the hover effect is added once per element
-            if (!highlightElement.dataset.hoverBound) {
-                
-                // When the user hovers over the highlight
-                highlightElement.addEventListener('mouseenter', () => {
-
-                    // Find the row with the matching ID attribute
-                    const tableRow = document.querySelector(`#edit-table tbody tr[data-highlight-id="${highlightId}"]`);
-                    
-                    // If the matching ID is found, scroll it into view and highlight the row
-                    if (tableRow) {
-                        tableRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        tableRow.classList.add('highlight-row');
+                // Populate table dynamically
+                Object.keys(stats).forEach((type) => {
+                    try {
+                        document.getElementById(`${type}`).innerText = categoryCounts[type] || 0;
+                    } catch (error) {
+                        console.error(`Error processing type "${type}":`, error);
+                        // Optionally, you can handle specific cases here, e.g., setting default values.
                     }
                 });
-
-                // When the user stops hovering over the highlight
-                highlightElement.addEventListener('mouseleave', () => {
-                    const tableRow = document.querySelector(`#edit-table tbody tr[data-highlight-id="${highlightId}"]`);
-                    
-                    // Remove the highlight from the row
-                    if (tableRow) {
-                        tableRow.classList.remove('highlight-row');
-                    }
-                });
-
-                // To prevent attaching another event listener in the future
-                highlightElement.dataset.hoverBound = 'true';
-            }
-        }
-
-
-
-        let evaluateClickCount = 0;
-
-        document.getElementById('refresh-but').addEventListener('click', function() {
-            evaluateClickCount++;
-
-            const responseBox = document.getElementById('response-input');
-            const sourceBox = document.getElementById('source-input');
-            const refreshButton = document.getElementById('refresh-but');
-
-            if (!responseBox.innerText.trim() || responseBox.innerText.trim() === "ReWrite's Response") {
-                console.log("Error: No essay to evaluate.");
-                alert("Please generate a response first.");
-                return;
             }
 
-            const essay = responseBox.innerText;
-            const source_text = sourceBox.innerText;
+                try {
+                    await fetchEdits('/simplify', 'simplify', { essay });
+                    await fetchEdits('/exemplify', 'exemplify', { essay });
+                    await fetchEdits('/factcheck', 'factcheck', { essay });
+                    // await fetchEdits('/factcheck', 'factCheck', { essay, source_text: sourceText });
+                    await fetchEdits('/assert', 'assert', { essay });
+                    await fetchEdits('/clarify', 'clarify', { essay });
 
-            refreshButton.innerText = 'Loading...';
-            refreshButton.disabled = true;
+                    await delay(20000);
 
-            let highlightedText = essay;
+                    // Fetch all stored edits and apply highlights
+                    const storedEdits = await fetchStoredEdits();
 
-            let simplifyNumber, exemplifyNumber, factCheckNumber, assertNumber, clarifyNumber;
 
-            const editsToAnalyze = evaluateClickCount === 1 ? essay : getOutstandingEdits();
+                    // storedEdits.forEach((edit) => {
+                    //     const phraseRegex = new RegExp(`\\b${edit.phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+                    //     highlightedText = highlightedText.replace(
+                    //         phraseRegex,
+                    //         `<span class="${edit.type}_highlight highlight-span" data-type="${edit.type}" data-suggestion="${edit.suggestion}" data-reasoning="${edit.reasoning}" data-start-index="${edit.startIndex}" data-end-index="${edit.endIndex}">${edit.phrase}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="${edit.completed}" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span></span></span>`
+                    //     );
+                    // });
+                    storedEdits.forEach((edit) => {
+                        const phraseRegex = new RegExp(`\\b${edit.phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
 
-            function getOutstandingEdits() {
-                return Array.from(document.querySelectorAll('#edit-table tbody tr'))
-                    .filter(row => row.querySelector('td:last-child').textContent === 'No')
-                    .map(row => row.querySelector('td:nth-child(2)').textContent)
-                    .join('. ');
-            }
+                        highlightedText = highlightedText.replace(phraseRegex, (match) => {
+                            // Check if the match is already highlighted
+                            const existingMatch = match.match(/<span[^>]*class="([^"]*)"/);
+                            const existingTypes = match.match(/data-type="([^"]*)"/);
 
-            // SIMPLIFY
-            fetch('/simplify', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json' },
-                body: JSON.stringify({essay: editsToAnalyze})
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log("SIMPLIFY");
-                console.log(data.simplify_number);
-                simplifyNumber = data.simplify_number;
-                // document.getElementById('simplify').innerText = data.simplify_number;
+                            let types = existingTypes ? existingTypes[1].split(',') : [];
+                            let newClass = `${edit.type}_highlight highlight-span`;
 
-                data.simplify_context.forEach((word, index) => {
-                    const wordRegex = new RegExp(`\\b${word}\\b(?!</span>)`, 'gi');
-                    const suggestion = data.simplify_suggestion[index] || "Consider simplifying this word.";
-                    const highlightId = addEditToTable(evaluateClickCount, 'Simplify', word, suggestion, false);
+                            // Add the new type if not already present
+                            if (!types.includes(edit.type)) {
+                                types.push(edit.type);
+                            }
 
-                    highlightedText = highlightedText.replace(wordRegex,
-                        // `<span class="simplify_highlight" data-highlight-id="${highlightId}">${word}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span><span class="tooltip-text"><span class="suggestion-text">${suggestion}</span></span></span></span>`
-                        `<span class="simplify_highlight" data-highlight-id="${highlightId}">${word}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span></span></span>`
-                    );
-                });
-            }) // End of SIMPLIFY fetch and .then chain
+                            // Generate box-shadow styles dynamically
+                            const shadowColors = {
+                                clarify: 'lightcoral',
+                                assert: 'lightgreen',
+                                factcheck: 'lightblue',
+                                exemplify: 'pink',
+                                simplify: 'lightsalmon',
+                            };
 
-            // EXEMPLIFY
-            .then(() => { // Start EXEMPLIFY fetch chain
-                return fetch('/exemplify', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ essay: editsToAnalyze})
-                });
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log("EXEMPLIFY");
-                console.log(data.exemplify_number);
-                exemplifyNumber = data.exemplify_number;
-                // document.getElementById('exemplify').innerText = data.exemplify_number;
+                            const boxShadows = types
+                                .map((type) => `0 0 0 2px ${shadowColors[type]}`)
+                                .join(',');
 
-                data.exemplify_context.forEach((phrase, index) => {
-                    const phraseRegex = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-                    const suggestion = data.exemplify_suggestion[index] || "Consider adding an example here.";
-                    const reasoning = data.exemplify_reasoning[index] || "No reasoning provided.";
-                    const highlightId = addEditToTable(evaluateClickCount, 'Exemplify', phrase, suggestion, false);
+                            // Combine classes if already highlighted
+                            if (existingMatch) {
+                                const existingClasses = existingMatch[1];
+                                if (!existingClasses.includes(edit.type)) {
+                                    newClass = `${existingClasses} ${edit.type}_highlight`;
+                                }
+                            }
 
-                    highlightedText = highlightedText.replace(phraseRegex,
-                        // `<span class="exemplify_highlight" data-highlight-id="${highlightId}">${phrase}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span><span class="tooltip-text"><span class="suggestion-text">${suggestion}</span><button class="dropdown-toggle" onclick="toggleDropdown(this)">Details ▼</button><span class="dropdown-content" style="display: none;">${reasoning}</span></span></span></span>`
-                        `<span class="exemplify_highlight" data-highlight-id="${highlightId}">${phrase}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span></span></span>`
-                    );
-                });
-            }) // End of EXEMPLIFY fetch and .then chain
+                            return `<span class="${newClass}" data-type="${types.join(',')}" data-suggestion="${edit.suggestion}" data-reasoning="${edit.reasoning}" style="--highlight-shadows: ${boxShadows}">${match}</span>`;
+                        });
+                    });
 
-            // FACTCHECK
-            .then(() => { // Start FACTCHECK fetch chain
-                return fetch('/factcheck', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json'},
-                    body: JSON.stringify({ essay: editsToAnalyze, source_text: source_text})
-                });
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log("FACTCHECK");
-                console.log(data.factcheck_number);
-                factCheckNumber = data.factcheck_number;
-                // document.getElementById('fact-check').innerText = data.factcheck_number;
 
-                data.factcheck_context.forEach((phrase, index) => {
-                    const phraseRegex = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-                    const suggestion = "This doesn't appear to be supported by the source text. Double check for accuracy.";
-                    const reasoning = data.factcheck_reasoning[index] || "No reasoning provided.";
-                    const highlightId = addEditToTable(evaluateClickCount, 'Factcheck', phrase, suggestion, false);
 
-                    highlightedText = highlightedText.replace(phraseRegex,
-                        // `<span class="factcheck_highlight" data-highlight-id="${highlightId}">${phrase}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span><span class="tooltip-text"><span class="suggestion-text">${suggestion}</span><button class="dropdown-toggle" onclick="toggleDropdown(this)">Details ▼</button><span class="dropdown-content" style="display: none;">${reasoning}</span></span></span></span>`
-                        `<span class="factcheck_highlight" data-highlight-id="${highlightId}">${phrase}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span></span></span>`
-                    );
-                });
-            }) // End of FACTCHECK fetch and .then chain
 
-            // ASSERT
-            .then(() => { // Start ASSERT fetch chain
-                return fetch('/assert', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json'},
-                    body: JSON.stringify({essay: editsToAnalyze})
-                });
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log("ASSERT");
-                console.log(data.assert_number);
-                assertNumber = data.assert_number;
-                // document.getElementById('assert').innerText = data.assert_number;
 
-                data.assert_context.forEach((phrase, index) => {
-                    const phraseRegex = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-                    const suggestion = data.assert_suggestion[index] || "Consider strengthening your claim.";
-                    const reasoning = data.assert_reasoning[index] || "No reasoning provided.";
-                    const highlightId = addEditToTable(evaluateClickCount, 'Assert', phrase, suggestion, false);
+                    responseBox.innerHTML = highlightedText.replace(/\n/g, '<br>');
+                    await updateTable(storedEdits);
 
-                    highlightedText = highlightedText.replace(phraseRegex,
-                        // `<span class="assert_highlight" data-highlight-id="${highlightId}">${phrase}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span><span class="tooltip-text"><span class="suggestion-text">${suggestion}</span><button class="dropdown-toggle" onclick="toggleDropdown(this)">Details ▼</button><span class="dropdown-content" style="display: none;">${reasoning}</span></span></span></span>`
-                        `<span class="assert_highlight" data-highlight-id="${highlightId}">${phrase}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span></span></span>`
-                    );
-                });
-
-            }) // End of ASSERT fetch and .then chain
-
-            // CLARIFY
-            .then(() => { // Start CLARIFY fetch chain
-                return fetch('/clarify', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json'},
-                    body: JSON.stringify({essay: editsToAnalyze})
-                });
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log("CLARIFY");
-                console.log(data.clarify_number);
-                clarifyNumber = data.clarify_number;
-                // document.getElementById('clarify').innerText = data.clarify_number;
-
-                data.clarify_context.forEach((phrase, index) => {
-                    const phraseRegex = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-                    const suggestion = data.clarify_suggestion[index] || "Consider clarifying this part.";
-                    const reasoning = data.clarify_reasoning[index] || "No reasoning provided.";
-                    const highlightId = addEditToTable(evaluateClickCount, 'Clarify', phrase, suggestion, false);
-
-                    highlightedText = highlightedText.replace(phraseRegex,
-                        // `<span class="clarify_highlight" data-highlight-id="${highlightId}">${phrase}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span><span class="tooltip-text"><span class="suggestion-text">${suggestion}</span><button class="dropdown-toggle" onclick="toggleDropdown(this)">Details ▼</button><span class="dropdown-content" style="display: none;">${reasoning}</span></span></span></span>`
-                        `<span class="clarify_highlight" data-highlight-id="${highlightId}">${phrase}<span class="tooltip-content"><span class="tooltip-check"><input type="checkbox" class="edit-check" data-completed="false" onchange="toggleCompletion(this)"><label>Mark as Completed</label></span></span></span>`
-                    );
-                });
-
-                responseBox.innerHTML = highlightedText.replace(/\n/g, '<br>');
-                window.highlightedEssay = responseBox.innerHTML;
-                window.userEditedEssay = responseBox.innerHTML;
-
-                document.querySelectorAll('.simplify_highlight, .exemplify_highlight, .factcheck_highlight, .assert_highlight, .clarify_highlight').forEach(span => {
-                    const highlightId = span.getAttribute('data-highlight-id');
-                    applyHoverEffectToHighlight(span, highlightId);
-                });
-
-                document.getElementById('simplify').innerText = simplifyNumber;
-                document.getElementById('exemplify').innerText = exemplifyNumber;
-                document.getElementById('fact-check').innerText = factCheckNumber;
-                document.getElementById('assert').innerText = assertNumber;
-                document.getElementById('clarify').innerText = clarifyNumber;
-
-                refreshButton.innerText = 'STEP 5: Evaluate Essay';
-                refreshButton.disabled = false;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                refreshButton.innerText = 'STEP 5: Evaluate Essay';
-                refreshButton.disabled = false;
+                } catch (error) {
+                    console.error('Error:', error);
+                } finally {
+                    refreshButton.innerText = 'STEP 5: Evaluate Essay';
+                    refreshButton.disabled = false;
+                }
             });
 
-        });
+            
+
+            function normalizeText(text) {
+                return text.toLowerCase().replace(/[^\w\s]/g, '').trim(); // Remove special characters and convert to lowercase
+            }
+
+            function delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
 
 
-//         document.addEventListener('DOMContentLoaded', function () {
-//     // Toggle button logic - switches between user edit highlights and refresh-but highlights
-//     let highlightToggle = false;
 
-//     document.getElementById('highlight-toggle').addEventListener('click', function () {
 
-//         if (typeof window.initialEssay === 'undefined' || typeof window.userEditedEssay === 'undefined' || typeof window.highlightedEssay === 'undefined') {
-//             console.error("Error: initialEssay, userEditedEssay, or highlightedEssay is undefined.");
-//             alert("Please have ReWrite write and evaluate the essay first.");
-//             return;
-//         }
+            // function collectEdits() {
+            //     const edits = [];
+            //     document.querySelectorAll('.highlight-span').forEach((highlight) => {
+            //         const type = highlight.dataset.type; // e.g., Simplify, Exemplify
+            //         const phrase = highlight.innerText; // Highlighted text
+            //         const suggestion = highlight.dataset.suggestion; // Suggestion text
+            //         const reasoning = highlight.dataset.reasoning; // Suggestion text
+            //         const highlightId = highlight.dataset.highlightId; // Highlight ID
+            //         const startIndex = parseInt(highlight.dataset.startIndex, 10); // Start index
+            //         const endIndex = parseInt(highlight.dataset.endIndex, 10); // End index
+            //         const completed = highlight.querySelector('.edit-check').checked; // Completion status
 
-//         const responseBox = document.getElementById('response-input');
-//         const toggleButton = document.getElementById('highlight-toggle');
+            //         edits.push({
+            //             type,
+            //             phrase,
+            //             suggestion,
+            //             reasoning,
+            //             highlightId,
+            //             startIndex,
+            //             endIndex,
+            //             completed,
+            //         });
+            //     });
+            //     return edits;
+            // }
 
-//         // Helper function to strip HTML tags
-//         function stripHTML(html) {
-//             const tempDiv = document.createElement("div");
-//             tempDiv.innerHTML = html;
-//             return tempDiv.textContent || tempDiv.innerText || "";
-//         }
-        
-//         if (!highlightToggle) {
-//             // First toggle: Show user edit highlights only, remove refresh-but highlights
+            // async function sendEditsToBackend(edits) {
+            //     try {
+            //         const response = await fetch('http://127.0.0.1:5000/store-edits', {
+            //             method: 'POST',
+            //             headers: {
+            //                 'Content-Type': 'application/json',
+            //             },
+            //             body: JSON.stringify({ edits }),
+            //         });
 
-//             // Strip HTML tags only for diff comparison
-//             const strippedEditedText = stripHTML(window.userEditedEssay).split('\n').map(paragraph => paragraph.trim());
-//             const strippedOriginalText = stripHTML(window.initialEssay).split('\n').map(paragraph => paragraph.trim());
+            //         const data = await response.json();
+            //         // console.log('Edits successfully sent:', data);
+            //     } catch (error) {
+            //         console.error('Error sending edits to backend:', error);
+            //     }
+            // }
 
-//             // Process the original HTML structure in userEditedEssay for display with highlights
-//             const editedTextWithHTML = window.userEditedEssay.split('\n').map(paragraph => paragraph.trim());
 
-//             responseBox.innerHTML = ''; // Clear response box for clean highlight application
+            // setInterval(() => {
+            //     const responseBox = document.getElementById('response-input');
+            //     const responseBoxText = responseBox ? responseBox.innerText : '';
 
-//             // Process each paragraph to show only user edit highlights
-//             editedTextWithHTML.forEach((paragraphHTML, index) => {
-//                 const originalParagraph = strippedOriginalText[index] || '';
-//                 const editedParagraph = strippedEditedText[index] || '';
-
-//                 const paragraphDiv = document.createElement('div'); // Preserve paragraph structure
-
-//                 // Compare stripped original and edited text, but apply highlights to original HTML
-//                 const diff = Diff.diffWords(originalParagraph, editedParagraph);
-//                 let htmlIndex = 0;
-
-//                 diff.forEach(part => {
-//                     const span = document.createElement('span');
-
-//                     if (part.added) {
-//                         // Highlight only user edits in yellow
-//                         span.style.backgroundColor = 'yellow';
-//                     }
-
-//                     // Get corresponding HTML portion from userEditedEssay based on diff part length
-//                     const htmlPortion = paragraphHTML.slice(htmlIndex, htmlIndex + part.value.length);
-//                     span.innerHTML = htmlPortion; // Use original HTML structure
-
-//                     htmlIndex += part.value.length;
-//                     paragraphDiv.appendChild(span);
-//                 });
-
-//                 responseBox.appendChild(paragraphDiv); // Append processed paragraph to responseBox
-//             });
-
-//             toggleButton.textContent = "Show ReWrite's edits";
-//         } else {
-//             // Second toggle: Restore all refresh-but highlights from `window.highlightedEssay`
-//             responseBox.innerHTML = window.highlightedEssay; // Display the full highlighted HTML structure
-
-//             toggleButton.textContent = "Show Your Edits";
-//         }
-
-//         // Toggle the state
-//         highlightToggle = !highlightToggle;
-//     });
-// });
-
+            //     fetch('/track-edits', {
+            //         method: 'POST',
+            //         headers: {
+            //             'Content-Type': 'application/json',
+            //         },
+            //         body: JSON.stringify({ responseBoxText }),
+            //     })
+            //         .then(response => response.json())
+            //         .then(data => {
+            //             // console.log('Edit tracking response:', data);
+            //         })
+            //         .catch(error => {
+            //             console.error('Error tracking edits:', error);
+            //         });
+            // }, 3000); // Runs every 3 seconds
 
 
 
@@ -948,128 +924,133 @@
         
             
 
-        // Store the evolving data points for each metric
-        let metricsData = {
-            Clarify: [0],
-            Assert: [0],
-            FactCheck: [0],
-            Exemplify: [0],
-            Simplify: [0]
-        };
+        // // Store the evolving data points for each metric
+        // let metricsData = {
+        //     Clarify: [0],
+        //     Assert: [0],
+        //     FactCheck: [0],
+        //     Exemplify: [0],
+        //     Simplify: [0]
+        // };
 
-        let editCount = 0; // Tracks the number of edits (time)
+        // let editCount = 0; // Tracks the number of edits (time)
 
-        // Function to update the chart data
-        function updateChartData() {
-            editCount++;
+        // // Function to update the chart data
+        // function updateChartData() {
+        //     editCount++;
 
-            // Get the latest values from the table
-            metricsData.Clarify.push(parseInt(document.getElementById('clarify').textContent));
-            metricsData.Assert.push(parseInt(document.getElementById('assert').textContent));
-            metricsData.FactCheck.push(parseInt(document.getElementById('fact-check').textContent));
-            metricsData.Exemplify.push(parseInt(document.getElementById('exemplify').textContent));
-            metricsData.Simplify.push(parseInt(document.getElementById('simplify').textContent));
+        //     // Get the latest values from the table
+        //     metricsData.Clarify.push(parseInt(document.getElementById('clarify').textContent));
+        //     metricsData.Assert.push(parseInt(document.getElementById('assert').textContent));
+        //     metricsData.FactCheck.push(parseInt(document.getElementById('fact-check').textContent));
+        //     metricsData.Exemplify.push(parseInt(document.getElementById('exemplify').textContent));
+        //     metricsData.Simplify.push(parseInt(document.getElementById('simplify').textContent));
 
-            drawChart();
-        }
+        //     drawChart();
+        // }
 
-        function drawChart() {
-            // Clear existing SVG content before re-rendering
-            d3.select("#bar-chart").selectAll("*").remove();
+        // function drawChart() {
+        //     // Clear existing SVG content before re-rendering
+        //     d3.select("#bar-chart").selectAll("*").remove();
 
-            var chartHeight = document.querySelector('.chart-container').clientHeight;
-            var margin = {top: 20, right: 20, bottom: 30, left: 60};
-            var width = document.getElementById("bar-chart").clientWidth - margin.left - margin.right;
-            var height = chartHeight - margin.top - margin.bottom;
+        //     var chartHeight = document.querySelector('.chart-container').clientHeight;
+        //     var margin = {top: 20, right: 20, bottom: 30, left: 60};
+        //     var width = document.getElementById("bar-chart").clientWidth - margin.left - margin.right;
+        //     var height = chartHeight - margin.top - margin.bottom;
 
-            // Create an SVG container
-            var svg = d3.select("#bar-chart")
-                .append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        //     // Create an SVG container
+        //     var svg = d3.select("#bar-chart")
+        //         .append("svg")
+        //         .attr("width", width + margin.left + margin.right)
+        //         .attr("height", height + margin.top + margin.bottom)
+        //         .append("g")
+        //         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-            // X scale: Time (number of edits)
-            var xScale = d3.scaleLinear()
-                .domain([0, editCount]) // Number of edits so far
-                .range([0, width]);
+        //     // X scale: Time (number of edits)
+        //     var xScale = d3.scaleLinear()
+        //         .domain([0, editCount]) // Number of edits so far
+        //         .range([0, width]);
 
-            // Y scale: Metric values
-            var yScale = d3.scaleLinear()
-                .domain([0, d3.max(Object.values(metricsData).flat())]) // Max value from all metrics
-                .range([height, 0]);
+        //     // Y scale: Metric values
+        //     var yScale = d3.scaleLinear()
+        //         .domain([0, d3.max(Object.values(metricsData).flat())]) // Max value from all metrics
+        //         .range([height, 0]);
 
-            // Append the Y axis
-            svg.append("g")
-                .call(d3.axisLeft(yScale).ticks(5));
+        //     // Append the Y axis
+        //     svg.append("g")
+        //         .call(d3.axisLeft(yScale).ticks(5));
 
-            // Define custom colors for each metric
-            const colorMap = {
-                Clarify: "#F08080",
-                Assert: "#90EE90",
-                FactCheck: "#ADD8E6",
-                Exemplify: "#FFC0CB",
-                Simplify: "#FFA07A",
-            };
+        //     // Define custom colors for each metric
+        //     const colorMap = {
+        //         Clarify: "#F08080",
+        //         Assert: "#90EE90",
+        //         FactCheck: "#ADD8E6",
+        //         Exemplify: "#FFC0CB",
+        //         Simplify: "#FFA07A",
+        //     };
 
-            // Draw lines and circles for each metric
-            Object.keys(metricsData).forEach((key) => {
-                svg.append("path")
-                    .datum(metricsData[key])
-                    .attr("fill", "none")
-                    .attr("stroke", colorMap[key]) // Use custom color
-                    .attr("stroke-width", 3) // Increased line width
-                    .attr("d", d3.line()
-                        .x((d, index) => xScale(index)) // Index is the edit time
-                        .y(d => yScale(d)) // Metric value
-                    );
+        //     // Draw lines and circles for each metric
+        //     Object.keys(metricsData).forEach((key) => {
+        //         svg.append("path")
+        //             .datum(metricsData[key])
+        //             .attr("fill", "none")
+        //             .attr("stroke", colorMap[key]) // Use custom color
+        //             .attr("stroke-width", 3) // Increased line width
+        //             .attr("d", d3.line()
+        //                 .x((d, index) => xScale(index)) // Index is the edit time
+        //                 .y(d => yScale(d)) // Metric value
+        //             );
 
-                // Add circles at each data point
-                svg.selectAll(".circle-" + key)
-                    .data(metricsData[key])
-                    .enter()
-                    .append("circle")
-                    .attr("cx", (d, index) => xScale(index))
-                    .attr("cy", d => yScale(d))
-                    .attr("r", 4) // Circle radius
-                    .attr("fill", colorMap[key]); // Use custom color
-            });
+        //         // Add circles at each data point
+        //         svg.selectAll(".circle-" + key)
+        //             .data(metricsData[key])
+        //             .enter()
+        //             .append("circle")
+        //             .attr("cx", (d, index) => xScale(index))
+        //             .attr("cy", d => yScale(d))
+        //             .attr("r", 4) // Circle radius
+        //             .attr("fill", colorMap[key]); // Use custom color
+        //     });
 
-            // Add title
-            svg.append("text")
-                .attr("x", (width / 2))
-                .attr("y", -5)
-                .attr("text-anchor", "middle")
-                .attr("font-size", "16px")
-                .attr("font-weight", "bold")
-                .attr("font-family", "'Anton', sans-serif")
-                .text("Flag Tracker");
-        }
-
-
-
-        // Set up a MutationObserver to detect changes in the table cells
-        const tableObserver = new MutationObserver((mutationsList) => {
-            for (let mutation of mutationsList) {
-                if (mutation.type === 'characterData' || mutation.type === 'childList') {
-                    updateChartData();
-                    break; // Update once per batch of mutations
-                }
-            }
-        });
-
-        // Observe changes in the specific table cells
-        ['clarify', 'assert', 'fact-check', 'exemplify', 'simplify'].forEach(id => {
-            const targetNode = document.getElementById(id);
-            tableObserver.observe(targetNode, { characterData: true, childList: true, subtree: true });
-        });
-
-        // Initial chart draw
-        drawChart();
+        //     // Add title
+        //     svg.append("text")
+        //         .attr("x", (width / 2))
+        //         .attr("y", -5)
+        //         .attr("text-anchor", "middle")
+        //         .attr("font-size", "16px")
+        //         .attr("font-weight", "bold")
+        //         .attr("font-family", "'Anton', sans-serif")
+        //         .text("Flag Tracker");
+        // }
 
 
 
+        // // Set up a MutationObserver to detect changes in the table cells
+        // const tableObserver = new MutationObserver((mutationsList) => {
+        //     for (let mutation of mutationsList) {
+        //         if (mutation.type === 'characterData' || mutation.type === 'childList') {
+        //             updateChartData();
+        //             break; // Update once per batch of mutations
+        //         }
+        //     }
+        // });
+
+        // // Observe changes in the specific table cells
+        // ['clarify', 'assert', 'fact-check', 'exemplify', 'simplify'].forEach(id => {
+        //     const targetNode = document.getElementById(id);
+        //     tableObserver.observe(targetNode, { characterData: true, childList: true, subtree: true });
+        // });
+
+        // // Initial chart draw
+        // drawChart();
+
+
+        // var tracker = new ice.InlineChangeEditor({
+        //             element: document.getElementById('response-input'),
+        //             handleEvents: true,
+        //             currentUser: { id: 1, name: 'Miss T' },
+
+        //             }).startTracking();
 
 
             

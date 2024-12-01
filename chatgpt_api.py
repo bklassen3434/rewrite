@@ -4,6 +4,8 @@ from textwrap import dedent
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
+import sqlite3
+import difflib
 
 app = Flask(__name__)
 
@@ -20,34 +22,37 @@ task = '''
 '''
 
 simplify_task = '''
-    You are a helpful editor. You will be provided with an essay, and your task is to identify words that are overly academic or complicated.
-    These are words that may be challenging for a general audience to understand easily.
+    You are a precise and discerning editor. You will be provided with an essay, and your task is to identify only words that are exceptionally academic or overly complicated.
+    These words must represent a significant barrier to comprehension for a general audience, requiring advanced knowledge or niche expertise to understand easily.
+    Ignore words that are simply formal or uncommon but can still be understood in context.
 '''
 
 exemplify_task = '''
-    You are a helpful editor. You will be provided with an essay, and your task is to identify up to two specific spots within the essay where an example could enhance the content.
-    Focus on sections that lack evidence or sound too robotic, and suggest areas where a human or personal experience could make the point more relatable.
+    You are a meticulous and insightful editor. You will be provided with an essay, and your task is to identify only the most critical spots where an example is essential to enhance clarity, engagement, or persuasiveness.
+    Focus on sections that genuinely lack evidence, are difficult to grasp, or feel overly abstract. Ignore areas that are already clear or adequately detailed, even if they could theoretically be improved by an example.
 '''
 
 factcheck_task = '''
-    You are a helpful editor. You will be provided with an essay and a source text. Your task is to identify spots in the essay that may require fact-checking for accuracy.
-    Focus on statements that appear unsupported by the source text, lack concrete evidence, or seem questionable in their accuracy.
+    You are a meticulous and skeptical editor. You will be provided with an essay and a source text. Your task is to identify only the most critical spots in the essay that require fact-checking for accuracy.
+    Focus on statements that directly contradict the source text, make bold or improbable claims without evidence, or are likely to mislead readers if incorrect.
+    Avoid flagging general statements or minor details unless they are integral to the argument or significantly impact credibility.
 '''
 
 clarify_task = '''
-    You are a helpful editor. You will be provided with an essay, and your task is to identify spots in the text where the user can explore deeper implications of their statements.
-    Look for opportunities to investigate ethical, moral, social, or practical consequences or assumptions behind the assertions made in the essay.
-    Focus on areas where further reflection or questioning could add depth to the argument or discussion.
+    You are an incisive and thoughtful editor. You will be provided with an essay, and your task is to identify only the most compelling opportunities for deeper exploration of the text’s ideas.
+    Focus on areas where key ethical, moral, social, or practical implications are glaringly unexplored or where a deeper investigation would significantly enhance the argument’s depth and nuance.
+    Avoid suggesting reflection for sections that are already clear or sufficiently detailed unless the lack of depth weakens the essay.
 '''
 
 assert_task = '''
-    You are a helpful editor. You will be provided with an essay, and your task is to identify spots in the text where the user could take a more original and definitive stance.
-    Focus on areas that currently seem impartial or neutral, and suggest where the user could add conviction and defend their viewpoint with stronger reasoning and passion.
-    Encourage them to assert a unique perspective or argument, creating a more engaging and persuasive essay.
+    You are a discerning and assertive editor. You will be provided with an essay, and your task is to identify only the areas where the essay most critically lacks originality or conviction.
+    Focus on sections that feel notably weak, neutral, or overly cautious, and suggest ways for the user to add a bold, distinctive perspective or stronger reasoning.
+    Avoid flagging statements that are already clear or sufficiently assertive unless taking a more definitive stance would meaningfully enhance the essay's persuasiveness and engagement.
 '''
 
 @app.route('/')
 def index():
+    clear_tables()
     return render_template('rewrite.html')  # Render the HTML file
 
 @app.route('/rewrite', methods=['POST'])
@@ -106,9 +111,9 @@ def simplify():
     messages = [
         {"role": "system", "content": dedent(simplify_task)},
         {"role": "user", "content": dedent('''Provide:
-                                           - the count of the number of words (as simplify_number)
-                                           - a list with each entry being a word (as simplify_context)
-                                           - a list with each entry being a suggestion for a simpler alternative or improvement (as simplify_suggestion)
+                                            - A list where each entry is an identified word that meets the criteria for being overly academic or complex (as simplify_context).
+                                            - A list where each entry provides an explanation of why the identified word is overly academic or complex and presents a significant barrier to comprehension (as simplify_reasoning).
+                                            - A list where each entry suggests a simpler, equally precise alternative or improvement, ensuring the meaning and tone remain appropriate for the audience (as simplify_suggestion).
                                            ''')},
         {"role": "user", "content": dedent(f"Essay: {essay}")}
     ]
@@ -125,12 +130,12 @@ def simplify():
                     "schema": {
                         "type": "object",
                         "properties": {
-                            "simplify_number": {"type": "integer"},
                             "simplify_context": {"type": "array", "items": {"type": "string"}},
+                            "simplify_reasoning": {"type": "array", "items": {"type": "string"}},
                             "simplify_suggestion": {"type": "array", "items": {"type": "string"}},
 
                         },
-                        "required": ["simplify_number", "simplify_context", "simplify_suggestion"],
+                        "required": ["simplify_context", "simplify_reasoning", "simplify_suggestion"],
                         "additionalProperties": False
                     },
                     "strict": True
@@ -140,19 +145,19 @@ def simplify():
 
         # Parse the result
         result = json.loads(chat_completion.choices[0].message.content)
-        simplify_number = result.get('simplify_number', 0)
         simplify_context = result.get('simplify_context', [])
+        simplify_reasoning = result.get('simplify_context', [])
         simplify_suggestion = result.get('simplify_suggestion', [])
 
     except Exception as e:
         print(f"Error: {e}")
-        simplify_number = 0
         simplify_context = []
+        simplify_reasoning = []
         simplify_suggestion = []
 
     return jsonify({
-        "simplify_number": simplify_number,
         "simplify_context": simplify_context,
+        "simplify_reasoning": simplify_reasoning,
         "simplify_suggestion": simplify_suggestion,
 
         })
@@ -169,10 +174,9 @@ def exemplify():
     messages = [
         {"role": "system", "content": dedent(exemplify_task)},
         {"role": "user", "content": dedent('''Provide:
-                                           - the count of the number of spots (as exemplify_number)
-                                           - a list (of length 0, 1 or 2) with each entry being the four words closet to the corresponding spot (as exemplify_context)
-                                           - a list (of length 0, 1 or 2) with each entry being the reasoning why each spot was chosen (as exemplify_reasoning)
-                                           - a list (of length 0, 1 or 2) with each entry being a suggestion on how the user could improve the spot (as exemplify_suggestion)
+                                            - A list where each entry includes the four words closest to the identified spot that clearly indicate where an example would enhance the content (as exemplify_context).
+                                            - A list where each entry provides a clear reasoning for why the identified spot critically lacks an example, emphasizing how it impacts clarity, engagement, or persuasiveness (as exemplify_reasoning).
+                                            - A list where each entry suggests a specific type of example or approach the user could take to improve the spot, ensuring the suggestion aligns with the context and enhances relatability or evidence (as exemplify_suggestion).
                                            ''')},
         {"role": "user", "content": dedent(f"Essay: {essay}")}
     ]
@@ -189,12 +193,11 @@ def exemplify():
                     "schema": {
                         "type": "object",
                         "properties": {
-                            "exemplify_number": {"type": "integer"},
                             "exemplify_context": {"type": "array", "items": {"type": "string"}},
                             "exemplify_reasoning": {"type": "array", "items": {"type": "string"}},
                             "exemplify_suggestion": {"type": "array", "items": {"type": "string"}}
                         },
-                        "required": ["exemplify_number", "exemplify_context", "exemplify_reasoning", "exemplify_suggestion"],
+                        "required": ["exemplify_context", "exemplify_reasoning", "exemplify_suggestion"],
                         "additionalProperties": False
                     },
                     "strict": True
@@ -204,14 +207,12 @@ def exemplify():
 
         # Parse the result
         result = json.loads(chat_completion.choices[0].message.content)
-        exemplify_number = result.get('exemplify_number', 0)
         exemplify_context = result.get('exemplify_context', [])
         exemplify_reasoning = result.get('exemplify_reasoning', [])
         exemplify_suggestion = result.get('exemplify_suggestion', [])
 
     except Exception as e:
         print(f"Error: {e}")
-        exemplify_number = 0
         exemplify_context = []
         exemplify_reasoning = []
         exemplify_suggestion = []
@@ -219,7 +220,6 @@ def exemplify():
 
 
     return jsonify({
-        "exemplify_number": exemplify_number,
         "exemplify_context": exemplify_context,
         "exemplify_reasoning": exemplify_reasoning,
         "exemplify_suggestion": exemplify_suggestion
@@ -238,9 +238,9 @@ def factcheck():
     messages = [
         {"role": "system", "content": dedent(factcheck_task)},
         {"role": "user", "content": dedent('''Provide:
-                                           - the count of the number of spots (as factcheck_number)
-                                           - a list with each entry being the four words closet to the corresponding spot (as factcheck_context)
-                                           - a list with each entry being the reasoning why each spot was chosen (as factcheck_reasoning)
+                                            - A list where each entry includes the four words closest to the identified spot that clearly indicate the statement or claim requiring fact-checking (as factcheck_context).
+                                            - A list where each entry provides an explanation of why the identified spot was chosen, focusing on significant claims that appear unsupported, contradictory, or potentially misleading (as factcheck_reasoning).
+                                            - A list where each entry suggests a specific improvement, such as verifying the claim with credible sources, rephrasing for accuracy, or removing unsupported statements (as factcheck_suggestion).
                                            ''')},
         {"role": "user", "content": dedent(f"Essay: {essay}")},
         {"role": "user", "content": dedent(f"Source Text: {source_text}")}
@@ -258,11 +258,11 @@ def factcheck():
                     "schema": {
                         "type": "object",
                         "properties": {
-                            "factcheck_number": {"type": "integer"},
                             "factcheck_context": {"type": "array", "items": {"type": "string"}},
                             "factcheck_reasoning": {"type": "array", "items": {"type": "string"}},
+                            "factcheck_suggestion": {"type": "array", "items": {"type": "string"}},
                         },
-                        "required": ["factcheck_number", "factcheck_context", "factcheck_reasoning"],
+                        "required": ["factcheck_context", "factcheck_reasoning", "factcheck_suggestion"],
                         "additionalProperties": False
                     },
                     "strict": True
@@ -272,21 +272,21 @@ def factcheck():
 
         # Parse the result
         result = json.loads(chat_completion.choices[0].message.content)
-        factcheck_number = result.get('factcheck_number', 0)
         factcheck_context = result.get('factcheck_context', [])
         factcheck_reasoning = result.get('factcheck_reasoning', [])
+        factcheck_suggestion = result.get('factcheck_suggestion', [])
 
     except Exception as e:
         print(f"Error: {e}")
-        factcheck_number = 0
         factcheck_context = []
         factcheck_reasoning = []
+        factcheck_suggestion = []
 
 
     return jsonify({
-        "factcheck_number": factcheck_number,
         "factcheck_context": factcheck_context,
-        "factcheck_reasoning": factcheck_reasoning
+        "factcheck_reasoning": factcheck_reasoning,
+        "factcheck_suggestion": factcheck_suggestion,
         })
 
 
@@ -301,10 +301,9 @@ def clarify():
     messages = [
         {"role": "system", "content": dedent(factcheck_task)},
         {"role": "user", "content": dedent('''Provide:
-                                           - the count of the number of spots (as clarify_number)
-                                           - a list with each entry being the four words closet to the corresponding spot (as clarify_context)
-                                           - a list with each entry being the reasoning why each spot was chosen (as clarify_reasoning)
-                                           - a list with each entry being a suggestion on how the user could improve the spot (as clarify_suggestion)
+                                            - A list where each entry includes the four words closest to the identified spot that highlight where deeper exploration or clarification is needed (as clarify_context).
+                                            - A list where each entry provides an explanation of why the identified spot was chosen, focusing on areas where key implications, assumptions, or consequences are notably unexplored or vague (as clarify_reasoning).
+                                            - A list where each entry suggests a specific way the user could enhance the spot, such as expanding on implications, questioning assumptions, or exploring ethical, moral, social, or practical consequences (as clarify_suggestion).
                                            ''')},
         {"role": "user", "content": dedent(f"Essay: {essay}")}
     ]
@@ -321,12 +320,11 @@ def clarify():
                     "schema": {
                         "type": "object",
                         "properties": {
-                            "clarify_number": {"type": "integer"},
                             "clarify_context": {"type": "array", "items": {"type": "string"}},
                             "clarify_reasoning": {"type": "array", "items": {"type": "string"}},
                             "clarify_suggestion": {"type": "array", "items": {"type": "string"}},
                         },
-                        "required": ["clarify_number", "clarify_context", "clarify_reasoning", "clarify_suggestion"],
+                        "required": ["clarify_context", "clarify_reasoning", "clarify_suggestion"],
                         "additionalProperties": False
                     },
                     "strict": True
@@ -336,21 +334,18 @@ def clarify():
 
         # Parse the result
         result = json.loads(chat_completion.choices[0].message.content)
-        clarify_number = result.get('clarify_number', 0)
         clarify_context = result.get('clarify_context', [])
         clarify_reasoning = result.get('clarify_reasoning', [])
         clarify_suggestion = result.get('clarify_suggestion', [])
 
     except Exception as e:
         print(f"Error: {e}")
-        clarify_number = 0
         clarify_context = []
         clarify_reasoning = []
         clarify_suggestion = []
 
 
     return jsonify({
-        "clarify_number": clarify_number,
         "clarify_context": clarify_context,
         "clarify_reasoning": clarify_reasoning,
         "clarify_suggestion": clarify_suggestion,
@@ -369,10 +364,9 @@ def assertify():
     messages = [
         {"role": "system", "content": dedent(assert_task)},
         {"role": "user", "content": dedent('''Provide:
-                                           - the count of the number of spots (as assert_number)
-                                           - a list with each entry being the four words closet to the corresponding spot (as assert_context)
-                                           - a list with each entry being the reasoning why each spot was chosen (as assert_reasoning)
-                                           - a list with each entry being a suggestion on how the user could improve the spot (as assert_suggestion)
+                                            - A list where each entry includes the four words closest to the identified spot that clearly indicate where a stronger or more original stance is needed (as assert_context).
+                                            - A list where each entry provides an explanation of why the identified spot was chosen, focusing on areas that appear overly neutral, lack conviction, or fail to present a distinct perspective (as assert_reasoning).
+                                            - A list where each entry suggests a specific way the user could improve the spot, such as by taking a definitive stance, adding stronger reasoning, or presenting a unique perspective to enhance engagement and persuasiveness (as assert_suggestion).
                                            ''')},
         {"role": "user", "content": dedent(f"Essay: {essay}")}
     ]
@@ -389,12 +383,11 @@ def assertify():
                     "schema": {
                         "type": "object",
                         "properties": {
-                            "assert_number": {"type": "integer"},
                             "assert_context": {"type": "array", "items": {"type": "string"}},
                             "assert_reasoning": {"type": "array", "items": {"type": "string"}},
                             "assert_suggestion": {"type": "array", "items": {"type": "string"}},
                         },
-                        "required": ["assert_number", "assert_context", "assert_reasoning", "assert_suggestion"],
+                        "required": ["assert_context", "assert_reasoning", "assert_suggestion"],
                         "additionalProperties": False
                     },
                     "strict": True
@@ -404,27 +397,240 @@ def assertify():
 
         # Parse the result
         result = json.loads(chat_completion.choices[0].message.content)
-        assert_number = result.get('assert_number', 0)
         assert_context = result.get('assert_context', [])
         assert_reasoning = result.get('assert_reasoning', [])
         assert_suggestion = result.get('assert_suggestion', [])
 
     except Exception as e:
         print(f"Error: {e}")
-        assert_number = 0
         assert_context = []
         assert_reasoning = []
         assert_suggestion = []
 
 
     return jsonify({
-        "assert_number": assert_number,
         "assert_context": assert_context,
         "assert_reasoning": assert_reasoning,
         "assert_suggestion": assert_suggestion,
 
         })
 
+
+####### CREATE DATABASE #######
+DATABASE = 'edits.db'
+
+def init_db():
+    """Create the edits table if it doesn't already exist."""
+    with sqlite3.connect(DATABASE) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS edits (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                type TEXT NOT NULL,
+                phrase TEXT NOT NULL,
+                suggestion TEXT NOT NULL,
+                reasoning TEXT NOT NULL,
+                startIndex INTEGER NOT NULL,
+                endIndex INTEGER NOT NULL,
+                completed BOOLEAN NOT NULL,
+                UNIQUE(type, startIndex, endIndex)
+            )
+                       
+                       
+        ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_edits (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                startIndex INTEGER NOT NULL,
+                endIndex INTEGER NOT NULL,
+                change_type TEXT NOT NULL,
+                edit_content TEXT NOT NULL
+            )
+        ''')
+
+        conn.commit()
+
+# Call this function to initialize the database
+init_db()
+
+
+####### CLEAR DATABASE #######
+def clear_tables():
+    """Clear all data in the edits table."""
+    with sqlite3.connect(DATABASE) as conn:
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM edits')
+        cursor.execute('DELETE FROM sqlite_sequence WHERE name="edits"')
+        cursor.execute('DELETE FROM user_edits')
+        cursor.execute('DELETE FROM sqlite_sequence WHERE name="user_edits"')
+        conn.commit()
+
+@app.route('/store-edits', methods=['POST'])
+def store_llm_edits():
+    """Store edits in the database."""
+    try:
+        # Get data from request
+        data = request.get_json()
+        if not data or 'edits' not in data:
+            return jsonify({"error": "Invalid request, 'edits' key missing"}), 400
+
+        # Handle single edit or multiple edits
+        if 'edits' in data:
+            edits = data['edits']
+        else:
+            edits = [data]
+
+        # Store edits in the SQLite database
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            for edit in edits:
+                cursor.execute('''
+                    INSERT INTO edits (type, phrase, suggestion, reasoning, startIndex, endIndex, completed)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    edit['type'],
+                    edit['phrase'],
+                    edit['suggestion'],
+                    edit['reasoning'],
+                    edit.get('startIndex'),
+                    edit.get('endIndex'),
+                    int(edit.get('completed', False))  # Store completed as 0 or 1
+                ))
+            conn.commit()
+
+        return jsonify({"message": "Edits stored successfully", "edits_count": len(edits)}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+
+####### TOGGLE UPDATE COMPLETITION #######
+@app.route('/update-completion', methods=['POST'])
+def update_completion():
+    try:
+        data = request.get_json()
+
+        highlight_id = data.get('highlightId')
+        completed = data.get('completed')
+
+        if highlight_id is None or completed is None:
+            return jsonify({"error": "Missing highlightId or completed status"}), 400
+
+        with sqlite3.connect(DATABASE) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                UPDATE edits
+                SET completed = ?
+                WHERE highlight_id = ?
+            ''', (completed, highlight_id))
+            conn.commit()
+
+        return jsonify({"message": "Completion status updated successfully"}), 200
+
+    except Exception as e:
+        print("Error updating completion status:", e)
+        return jsonify({"error": str(e)}), 500
+    
+
+####### USER EDITS #######
+# Store the last known state of the response-box
+last_response_text = ""
+
+@app.route('/track-edits', methods=['POST'])
+def store_user_edits():
+    global last_response_text
+    try:
+        # Get the current text from the request
+        current_text = request.json.get('responseBoxText', '')
+        if current_text is None:
+            return jsonify({"error": "responseBoxText is missing"}), 400
+
+        # Compare the current text with the last known text
+        if last_response_text != current_text:
+            # Find the difference
+            start_index, end_index, change_type, edit_content = calculate_edit(last_response_text, current_text)
+
+            # Save the change to the database
+            with sqlite3.connect(DATABASE) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT INTO user_edits (start_index, end_index, change_type, edit_content)
+                    VALUES (?, ?, ?, ?)
+                ''', (start_index, end_index, change_type, edit_content))
+                conn.commit()
+
+            # Update the last known text
+            last_response_text = current_text
+
+        return jsonify({"message": "Edit tracked successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def calculate_edit(old_text, new_text):
+    """Calculate the edit details: start, end indices, type, and content of the change."""
+    diff = difflib.SequenceMatcher(None, old_text, new_text)
+    start_index = None
+    end_index = None
+    added_words = []
+    deleted_words = []
+
+    # Find changes in the text
+    for tag, i1, i2, j1, j2 in diff.get_opcodes():
+        if tag == 'replace':
+            deleted_words.append(old_text[i1:i2])
+            added_words.append(new_text[j1:j2])
+            if start_index is None:
+                start_index = j1
+            end_index = j2
+        elif tag == 'delete':
+            deleted_words.append(old_text[i1:i2])
+            if start_index is None:
+                start_index = j1
+            end_index = j2
+        elif tag == 'insert':
+            added_words.append(new_text[j1:j2])
+            if start_index is None:
+                start_index = j1
+            end_index = j2
+
+    # Combine added and deleted words for logging
+    edit_content = f"Added: {' '.join(added_words)}; Deleted: {' '.join(deleted_words)}"
+
+    # Determine the type of change
+    change_length = len(new_text) - len(old_text)
+    change_type = "new essay" if abs(change_length) > 1000 else "user edit"
+
+    # Handle cases where no explicit diff is found
+    if start_index is None or end_index is None:
+        start_index = 0
+        end_index = len(new_text)
+
+    return start_index, end_index, change_type, edit_content
+
+def get_db_connection():
+    """Establish and return a database connection."""
+    connection = sqlite3.connect(DATABASE)
+    connection.row_factory = sqlite3.Row
+    return connection
+
+@app.route('/get-edits', methods=['GET'])
+def get_edits():
+    """Retrieve all edits from the database."""
+    try:
+        with get_db_connection() as conn:
+            conn.execute("PRAGMA journal_mode=WAL;")  # Enable WAL for better concurrency
+            conn.commit()  # Ensure all pending writes are committed
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM edits ORDER BY id ASC")  # Ensure consistent order
+            edits = [dict(row) for row in cursor.fetchall()]
+
+        return jsonify({'edits': edits}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == "__main__":
