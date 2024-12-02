@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/src/assets/icons/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/src/assets/icons/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/src/assets/icons/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ReWrite &mdash; Ben Klassen</title>
+
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Signika:wght@400;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
+    <!-- LIBRARIES -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/diff@5.0.0/dist/diff.min.js"></script>
+
+    <!-- LOCAL -->
+    <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script src="http://code.jquery.com/jquery-migrate-1.0.0.js"></script>
+    <script type="text/javascript" src="/src/libs/ice/lib/rangy/rangy-core.js"></script>
+    <script type="text/javascript" src="/src/libs/ice/src/polyfills.js"></script>
+    <script type="text/javascript" src="/src/libs/ice/src/ice.js"></script>
+    <script type="text/javascript" src="/src/libs/ice/src/dom.js"></script>
+    <script type="text/javascript" src="/src/libs/ice/src/icePlugin.js"></script>
+    <script type="text/javascript" src="/src/libs/ice/src/icePluginManager.js"></script>
+    <script type="text/javascript" src="/src/libs/ice/src/bookmark.js"></script>
+    <script type="text/javascript" src="/src/libs/ice/src/selection.js"></script>
+    <script type="text/javascript" src="/src/libs/ice/src/plugins/IceAddTitlePlugin/IceAddTitlePlugin.js"></script>
+    <script type="text/javascript" src="/src/libs/ice/src/plugins/IceCopyPastePlugin/IceCopyPastePlugin.js"></script>
+    <script type="text/javascript" src="/src/libs/ice/src/plugins/IceEmdashPlugin/IceEmdashPlugin.js"></script>
+    <script
+      type="text/javascript"
+      src="/src/libs/ice/src/plugins/IceSmartQuotesPlugin/IceSmartQuotesPlugin.js"
+    ></script>
+    <script type="text/javascript" src="/src/libs/ice/lib/tinymce/jscripts/tiny_mce/tiny_mce.js"></script>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/src/ice.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="/src/index.css" type="text/css" media="screen" />
+  </head>
+
+  <body>
+    <!-- APP -->
+    <div id="app">
+      <!-- HEADER -->
+      <h1 class="title">
+        <img src="/src/assets/icons/android-chrome-512x512.png" width="32" height="32" />
+        <span>ReWrite</span>
+      </h1>
+
+      <!-- CONTENT -->
+      <div class="container">
+        <!-- Left Section: Text Inputs & Initial Actions -->
+        <div class="left-section">
+          <!-- Source Text Input -->
+          <div>
+            <label for="source-input">STEP 1: Enter Source Text</label>
+            <textarea class="source-text" id="source-input" placeholder="Source Text."></textarea>
+          </div>
+
+          <!-- Essay Prompt Input -->
+          <div>
+            <label for="essay-input">STEP 2: Enter Essay Prompt</label>
+            <textarea class="essay-prompt" id="essay-input" placeholder="Essay Prompt."></textarea>
+          </div>
+
+          <!-- Submit Button -->
+          <button class="submit-button" id="sub-but">STEP 3: Submit to ReWrite</button>
+
+          <!-- Response Section -->
+          <div class="step-4-container">
+            <label for="response">STEP 4: Edit Essay</label>
+            <button class="toggle-button CT-hide" id="highlight-toggle">
+              <i class="fas fa-eye"></i>
+              <span class="text">Show your edits!</span>
+            </button>
+          </div>
+          <div class="response-box CT-hide" id="response-input"><p>ReWrite's Response</p></div>
+        </div>
+
+        <!-- Right Section: Evaluation & Feedback -->
+        <div class="right-section">
+          <!-- Refresh Button -->
+          <button class="refresh-button" id="refresh-but">STEP 5: Evaluate Essay</button>
+
+          <div class="table-chart-container">
+            <!-- Flag Summary Table -->
+            <table id="flag-summary-table">
+              <caption id="table-title">
+                Flag Summary 🚩
+              </caption>
+              <tr>
+                <th class="clarify">Clarify!</th>
+                <td id="clarify" class="clarify">0</td>
+                <th class="assert">ASSERT!</th>
+                <td id="assert" class="assert">0</td>
+              </tr>
+              <tr>
+                <th class="factcheck">Fact-Check!</th>
+                <td id="factcheck" class="factcheck">0</td>
+                <th class="exemplify">Exemplify!</th>
+                <td id="exemplify" class="exemplify">0</td>
+              </tr>
+              <tr>
+                <th class="simplify" colspan="2">Simplify!</th>
+                <td id="simplify" class="simplify" colspan="2">0</td>
+              </tr>
+            </table>
+
+            <!-- Bar Chart -->
+            <div class="chart-container">
+              <svg id="bar-chart" width="100%" height="100%"></svg>
+            </div>
+          </div>
+          <div class="edit-table-container">
+            <!-- Flag Tracker Table -->
+            <table id="edit-table">
+              <caption id="table-title">
+                Flag Tracker 📋
+              </caption>
+              <thead>
+                <tr>
+                  <th>Evaluation #</th>
+                  <th>Category</th>
+                  <th>Context</th>
+                  <th>Suggested Fix</th>
+                  <th>Completed</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <!-- Explanatory Message -->
+          <div class="explanation">
+            <p>⭐ Address each flag to increase your score and sound more like a human! ⭐</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

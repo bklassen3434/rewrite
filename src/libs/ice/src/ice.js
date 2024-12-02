@@ -163,45 +163,14 @@
     /**
      * Initializes the internal range object and sets focus to the editing element.
      */
-    // initializeRange: function () {
-    //   var range = this.selection.createRange();
-    //   range.setStart(ice.dom.find(this.element, this.blockEls.join(', '))[0], 0);
-    //   range.collapse(true);
-    //   this.selection.addRange(range);
-    //   if (this.env.frame) this.env.frame.contentWindow.focus();
-    //   else this.element.focus();
-    // },
     initializeRange: function () {
-      console.log("this.element:", this.element); // Debugging
-      console.log("this.blockEls:", this.blockEls); // Debugging
-  
-      // Find matching block elements
-      var matchingElements = ice.dom.find(this.element, this.blockEls.join(', '));
-      console.log("Matching elements found:", matchingElements); // Debugging
-  
-      // If no matching elements, add a default <p> element
-      if (!matchingElements || matchingElements.length === 0) {
-          console.error("No matching block elements found. Adding a default <p>.");
-          var defaultElement = document.createElement("p");
-          defaultElement.textContent = "Default content";
-          this.element.appendChild(defaultElement);
-          matchingElements = [defaultElement];
-      }
-  
-      // Initialize range
       var range = this.selection.createRange();
-      range.setStart(matchingElements[0], 0); // Use the first matching or default element
+      range.setStart(ice.dom.find(this.element, this.blockEls.join(', '))[0], 0);
       range.collapse(true);
       this.selection.addRange(range);
-  
-      // Focus on the correct frame or element
-      if (this.env.frame) {
-          this.env.frame.contentWindow.focus();
-      } else {
-          this.element.focus();
-      }
-  },
-  
+      if (this.env.frame) this.env.frame.contentWindow.focus();
+      else this.element.focus();
+    },
 
     /**
      * Initializes the content in the editor - cleans non-block nodes found between blocks.
