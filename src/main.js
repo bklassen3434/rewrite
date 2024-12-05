@@ -10,6 +10,14 @@ var stats = {
   clarify: 0,
 };
 
+// elements
+var promptInput = document.getElementById("prompt-input");
+var sourceInput = document.getElementById("source-input");
+var highlightButton = document.getElementById("highlight-button");
+var submitButton = document.getElementById("submit-button");
+var evaluateButton = document.getElementById("evaluate-button");
+var essayContentDiv = document.getElementById("essay-content");
+
 // start ReWrite once page loads
 window.addEventListener("load", function () {
   init();
@@ -71,9 +79,9 @@ function init() {
 
   // setup and start event handling for track changes
   // See: <https://github.com/nytimes/ice>
-  const responseInput = document.getElementById("response-input");
+  
   window.tracker = new ice.InlineChangeEditor({
-    element: responseInput,
+    element: essayContentDiv,
     handleEvents: true,
     currentUser: { id: 11, name: "Geoffrey Jellineck" },
     plugins: [
@@ -94,25 +102,23 @@ function init() {
   fetch(`${baseURL}/clear-tables`, { method: "GET" });
 
   // Add event listeners
-  document.getElementById("highlight-toggle").addEventListener("click", onToggleUserEditsClick);
-  document.getElementById("sub-but").addEventListener("click", onSubmitButtonClick);
-  document.getElementById("refresh-but").addEventListener("click", onRefreshButtonClick);
+  highlightButton.addEventListener("click", onToggleUserEditsClick);
+  submitButton.addEventListener("click", onSubmitButtonClick);
+  evaluateButton.addEventListener("click", onEvaluateButtonClick);
 }
 
 /**
  * Toggles the visibility of user edits.
  */
 function onToggleUserEditsClick() {
-  const responseInput = document.getElementById("response-input");
-  const highlightToggleButton = $(this);
-  if ($(responseInput).hasClass("CT-hide")) {
-    $(responseInput).removeClass("CT-hide");
-    $(highlightToggleButton).removeClass("CT-hide");
-    $(highlightToggleButton).children(".text").text("Hide your edits!");
+  if ($(essayContentDiv).hasClass("CT-hide")) {
+    $(essayContentDiv).removeClass("CT-hide");
+    $(highlightButton).removeClass("CT-hide");
+    $(highlightButton).children(".text").text("Hide your edits!");
   } else {
-    $(responseInput).addClass("CT-hide");
-    $(highlightToggleButton).addClass("CT-hide");
-    $(highlightToggleButton).children(".text").text("Show your edits!");
+    $(essayContentDiv).addClass("CT-hide");
+    $(highlightButton).addClass("CT-hide");
+    $(highlightButton).children(".text").text("Show your edits!");
   }
 }
 
@@ -120,14 +126,13 @@ function onToggleUserEditsClick() {
  * TODO
  */
 function onSubmitButtonClick() {
-  // Retrieve input values (source text and essay prompt)
-  const sourceText = document.getElementById("source-input").value;
-  const essayPrompt = document.getElementById("essay-input").value;
-  const submitButton = document.getElementById("sub-but");
+  // get values of input
+  const promptInputValue = promptInput.value;
+  const sourceInputValue = sourceInput.value;
 
   // Validation check
-  if (!sourceText || !essayPrompt) {
-    console.log("Error: sourceText or essayPrompt are empty.");
+  if (!sourceInputValue || !promptInputValue) {
+    console.log("Error: sourceInput and/or promptInput are empty.");
     alert("Please fill out both the source text and the essay prompt.");
     return;
   }
@@ -135,11 +140,9 @@ function onSubmitButtonClick() {
   // Loading feedback to user (locks evaluate button to prevent multiple submissions)
   submitButton.innerText = "Loading...";
   submitButton.disabled = true;
-  // document.getElementById('response-input').innerText = "Loading...";
-  const responseInput = document.getElementById("response-input");
 
-  // responseInput.innerText = "Loading...";
-  responseInput.innerHTML = "<p>Loading...</p>";
+  // get essay content
+  essayContentDiv.innerHTML = "<p>Loading...</p>";
 
   // Request contains the source text and essay prompt
   const url = `${baseURL}/generate`;
@@ -149,8 +152,8 @@ function onSubmitButtonClick() {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      source_text: sourceText,
-      essay_prompt: essayPrompt,
+      source_text: sourceInputValue,
+      essay_prompt: promptInputValue,
     }),
   };
 
@@ -160,17 +163,13 @@ function onSubmitButtonClick() {
     .then((data) => {
       // Handle server response
       // Parses JSON response, updates response box, and saves the response
+      essayContentDiv.innerHTML = data.response || "<p>Default response content</p>";
 
-      // document.getElementById('response-input').innerText = data.response;
-      // responseInput.innerText = data.response || "<p>Default response content</p>";
+      wrapTextNodesInBlockElements(essayContentDiv);
 
-      responseInput.innerHTML = data.response || "<p>Default response content</p>";
-
-      wrapTextNodesInBlockElements(responseInput);
-
-      if (!responseInput.firstChild) {
-        console.warn("responseInput is empty. Adding a default <p> node.");
-        responseInput.innerHTML = "<p>Default response content</p>";
+      if (!essayContentDiv.firstChild) {
+        console.warn("essayContentDiv is empty. Adding a default <p> node.");
+        essayContentDiv.innerHTML = "<p>Default response content</p>";
       }
 
       // Reset submit button
@@ -188,14 +187,14 @@ function onSubmitButtonClick() {
 /**
  * Utility function for fetch operations
  */
-async function fetchEdits(essay, sourceText) {
+async function fetchEdits(essay, sourceInputValue) {
   try {
     // Request contains the essay and source text
     const url = `${baseURL}/evaluate`;
     const request = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ essay, sourceText }),
+      body: JSON.stringify({ essay, sourceInputValue }),
     };
 
     // Send a POST request to http://localhost:3001/evaluate
@@ -203,7 +202,7 @@ async function fetchEdits(essay, sourceText) {
     const data = await response.json();
 
     // `data` is a list of [{ type: "string", edits: [...] }, ...]
-    // console.log(data);
+    console.log(data);
 
     // parse each type of edit
     data.forEach(({ type, edits }) => {
@@ -305,7 +304,7 @@ async function updateTable(storedEdits) {
   // Populate table dynamically
   Object.keys(stats).forEach((type) => {
     try {
-      document.getElementById(`${type}`).innerText = categoryCounts[type] || 0;
+      document.getElementById(`${type}-value`).innerText = categoryCounts[type] || 0;
     } catch (error) {
       console.error(`Error processing type "${type}":`, error);
       // Optionally, you can handle specific cases here, e.g., setting default values.
@@ -316,35 +315,34 @@ async function updateTable(storedEdits) {
 /**
  * TODO
  */
-async function onRefreshButtonClick() {
-  const sourceText = document.getElementById("source-input").value;
-  const responseBox = document.getElementById("response-input");
-  const refreshButton = document.getElementById("refresh-but");
+async function onEvaluateButtonClick() {
+  // get values
+  const sourceInputValue = sourceInput.value;
 
   // Validation check
-  if (!responseBox.innerText.trim() || responseBox.innerText.trim() === "ReWrite's Response") {
+  if (!essayContentDiv.innerText.trim() || essayContentDiv.innerText.trim() === "ReWrite's Response") {
     console.log("Error: No essay to evaluate.");
     alert("Please generate a response first.");
     return;
   }
 
   // Validation check
-  if (!sourceText) {
-    console.log("Error: sourceText is empty.");
+  if (!sourceInputValue) {
+    console.log("Error: sourceInputValue is empty.");
     alert("Please fill out both the source text and the essay prompt.");
     return;
   }
 
-  const essay = responseBox.innerText;
-
-  refreshButton.innerText = "Loading...";
-  refreshButton.disabled = true;
-
+  const essay = essayContentDiv.innerText;
   let highlightedText = essay;
+
+  // disable evaluate button
+  evaluateButton.innerText = "Loading...";
+  evaluateButton.disabled = true;
 
   try {
     // request edits from backend
-    await fetchEdits(essay, sourceText);
+    await fetchEdits(essay, sourceInputValue);
 
     // Fetch all stored edits and apply highlights
     const storedEdits = await fetchStoredEdits();
@@ -397,13 +395,13 @@ async function onRefreshButtonClick() {
       });
     });
 
-    responseBox.innerHTML = highlightedText.replace(/\n/g, "<br>");
+    essayContentDiv.innerHTML = highlightedText.replace(/\n/g, "<br>");
     await updateTable(storedEdits);
   } catch (error) {
     console.error("Error:", error);
   } finally {
-    refreshButton.innerText = "STEP 5: Evaluate Essay";
-    refreshButton.disabled = false;
+    evaluateButton.innerText = "STEP 5: Evaluate Essay";
+    evaluateButton.disabled = false;
   }
 }
 

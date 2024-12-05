@@ -1,0 +1,392 @@
+html,
+body {
+  font-size: 10pt;
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ELEMENTS */
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 20px;
+  color: black;
+  font-weight: bold;
+  font-family: "Anton", sans-serif;
+  text-align: center;
+}
+
+caption {
+  font-weight: bold;
+  margin-bottom: 10px;
+  font-size: 20px;
+  font-family: "Anton", sans-serif;
+  color: black;
+}
+
+.explanation {
+  margin-top: 20px;
+  font-size: 12px;
+  font-family: "Signika", sans-serif;
+  font-weight: bold;
+  color: black;
+  text-align: center;
+}
+
+.tooltip-content {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 5px;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+  font-size: 12px;
+  text-align: left;
+  white-space: normal;
+  max-width: 500px;
+  word-wrap: break-word;
+}
+
+.tooltip-check {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: #555;
+}
+.tooltip-check input[type="checkbox"] {
+  margin: 0;
+}
+.tooltip-check label {
+  font-size: 12px;
+  margin: 0;
+}
+
+.tooltip-text {
+  font-size: 12px; /* Ensure tooltip text is readable */
+  color: #000; /* Standard color for tooltip content */
+}
+
+/* SECTIONS */
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.title {
+  margin: 0;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  column-gap: 12px;
+  background-color: #ddd;
+  font-family: "Anton", sans-serif;
+  box-shadow: 0 4px 2px -2px gray;
+  z-index: 1;
+}
+
+.container {
+  flex: 1 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: calc(100% - 52px);
+}
+
+/* LEFT SECTION */
+
+.left-section {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  overflow-y: auto;
+  resize: horizontal;
+  background-color: #eee;
+}
+
+.source-text,
+.essay-prompt,
+.submit-button {
+  margin-bottom: 12px;
+}
+
+.step-4-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+
+.step-4-container label {
+  margin: 0;
+}
+
+textarea.source-text {
+  width: calc(100% - 12px);
+  max-width: calc(100% - 12px);
+  min-height: 100px;
+  max-height: 300px;
+  margin-bottom: 10px;
+  padding: 5px;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: "Comic Sans MS", cursive, sans-serif;
+  color: black;
+  overflow: auto;
+}
+
+textarea.essay-prompt {
+  width: calc(100% - 12px);
+  max-width: calc(100% - 12px);
+  min-height: 50px;
+  max-height: 100px;
+  margin-bottom: 10px;
+  padding: 5px;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: "Caveat", cursive;
+  color: black;
+  overflow: auto;
+}
+
+.response-box {
+  min-height: 400px;
+  max-height: 800px;
+  margin-bottom: 10px;
+  padding: 5px;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: "Courier New", Courier, monospace;
+  overflow: auto;
+  background-color: #fff;
+}
+
+.submit-button {
+  height: 50px;
+  padding: 5px;
+  margin-bottom: 10px;
+  background-color: lightblue;
+  border: 3px solid;
+  border-radius: 10px;
+  font-size: 20px;
+  color: black;
+  font-weight: bold;
+  font-family: "Anton", sans-serif;
+  text-align: center;
+}
+
+.toggle-button {
+  height: 50px;
+  padding: 5px;
+  margin-bottom: 10px;
+  background-color: lightblue;
+  border: 3px solid;
+  border-radius: 10px;
+  font-size: 20px;
+  color: black;
+  font-weight: bold;
+  font-family: "Anton", sans-serif;
+  text-align: center;
+}
+
+.toggle-button:hover,
+.refresh-button:hover,
+.submit-button:hover {
+  background-color: deepskyblue;
+}
+
+/* RIGHT SECTION */
+
+.right-section {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.refresh-button {
+  height: 50px;
+  padding: 5px;
+  margin-bottom: 20px;
+  background-color: lightblue;
+  border: 3px solid;
+  border-radius: 10px;
+  font-size: 20px;
+  color: black;
+  font-weight: bold;
+  font-family: "Anton", sans-serif;
+  text-align: center;
+  word-wrap: break-word;
+  white-space: normal;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+table {
+  width: 100%;
+  padding: 5px;
+  max-width: 600px;
+  margin-bottom: 10px;
+  border-collapse: collapse;
+  border-radius: 10px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  font-family: "Signika", sans-serif;
+}
+th,
+td {
+  /* border: 1px solid black; */
+  /* border-radius: 10px; */
+  padding: 10px;
+  text-align: center;
+}
+
+td {
+  color: #333;
+  font-size: 30px;
+}
+
+th {
+  font-size: 16px;
+  font-weight: bold;
+  /* background-color: #333; */
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+/* First Row Elements (Clarify and Assert) */
+#flag-summary-table tr:nth-child(1) th:nth-child(1),
+#flag-summary-table tr:nth-child(1) td:nth-child(2) {
+  background-color: lightcoral; /* Clarify */
+}
+
+#flag-summary-table tr:nth-child(1) th:nth-child(3),
+#flag-summary-table tr:nth-child(1) td:nth-child(4) {
+  background-color: lightgreen; /* Assert */
+}
+
+/* Second Row Elements (Fact-Check and Exemplify) */
+#flag-summary-table tr:nth-child(2) th:nth-child(1),
+#flag-summary-table tr:nth-child(2) td:nth-child(2) {
+  background-color: lightblue; /* Fact-Check */
+}
+
+#flag-summary-table tr:nth-child(2) th:nth-child(3),
+#flag-summary-table tr:nth-child(2) td:nth-child(4) {
+  background-color: pink; /* Exemplify */
+}
+
+/* Third Row Element (Simplify) */
+#flag-summary-table tr:nth-child(3) th:nth-child(1),
+#flag-summary-table tr:nth-child(3) td:nth-child(2) {
+  background-color: lightsalmon; /* Simplify */
+}
+
+/* Container to make the edit-table scrollable */
+.edit-table-container {
+  max-height: 300px; /* Adjust height as needed */
+  overflow-y: auto; /* Add vertical scroll when content overflows */
+  border: 1px solid #ccc; /* Optional: border for visual clarity */
+  border-radius: 10px; /* Optional: rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: subtle shadow */
+}
+
+/* Ensure the table within the container takes full width */
+#edit-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#edit-table th,
+#edit-table td {
+  padding: 10px;
+  text-align: center;
+  font-size: 10px; /* Adjust font size to fit within scrollable view */
+  border-bottom: 1px solid black;
+}
+
+#edit-table th {
+  background-color: #e0e0e0; /* Light gray for headers */
+  position: sticky; /* Keep header visible while scrolling */
+  top: 0; /* Required for sticky positioning */
+  z-index: 1; /* Ensure header is above table content */
+  border-bottom: 2px solid black;
+}
+
+#edit-table tbody tr:hover {
+  background-color: white; /* Highlight row on hover for better visibility */
+}
+#edit-table tbody tr:last-child td {
+  border-bottom: none; /* Remove border from the last row for a cleaner finish */
+}
+
+.highlight-row {
+  background-color: white;
+  transition: background-color 0.3s ease;
+}
+
+.clarify_row,
+.clarify_highlight {
+  /* background-color: lightcoral; */
+  background-color: rgba(240, 128, 128, 0.8);
+}
+.assert_row,
+.assert_highlight {
+  /* background-color: lightgreen; */
+  background-color: rgba(144, 238, 144, 0.8);
+}
+.factcheck_row,
+.factcheck_highlight {
+  /* background-color: lightblue; */
+  background-color: rgba(173, 216, 230, 0.8);
+}
+.exemplify_row,
+.exemplify_highlight {
+  /* background-color: pink; */
+  background-color: rgba(255, 182, 193, 0.8);
+}
+.simplify_row,
+.simplify_highlight {
+  /* background-color: lightsalmon; */
+  background-color: rgba(255, 160, 122, 0.8);
+}
+
+.highlight-span {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.clarify_highlight,
+.assert_highlight,
+.factcheck_highlight,
+.exemplify_highlight,
+.simplify_highlight {
+  position: relative;
+  cursor: pointer;
+  font-weight: bold;
+  display: inline;
+  white-space: nowrap;
+}
+
+.clarify_highlight:hover .tooltip-content,
+.assert_highlight:hover .tooltip-content,
+.factcheck_highlight:hover .tooltip-content,
+.exemplify_highlight:hover .tooltip-content,
+.simplify_highlight:hover .tooltip-content {
+  display: block;
+}
+
+.edit-completed {
+  background-color: #f0f0f0;
+  color: black;
+  text-decoration: none;
+}

@@ -50,101 +50,76 @@
   <body>
     <!-- APP -->
     <div id="app">
+      <!-- HEADER -->
+      <h1 class="title">
+        <img src="/src/assets/icons/android-chrome-512x512.png" width="32" height="32" />
+        <span>ReWrite</span>
+      </h1>
+
       <!-- CONTENT -->
-      <div class="content">
-        <!-- CONTROLS -->
-        <div class="left-panel">
-          <!-- HEADER -->
-          <div class="header">
-            <img src="/src/assets/icons/android-chrome-512x512.png" width="24" height="24" />
-            <span class="title"><b>ReWrite</b></span>
+      <div class="container">
+        <!-- Left Section: Text Inputs & Initial Actions -->
+        <div class="left-section">
+          <!-- Source Text Input -->
+          <div>
+            <label for="source-input">STEP 1: Enter Source Text</label>
+            <textarea class="source-text" id="source-input" placeholder="Source Text."></textarea>
           </div>
 
           <!-- Essay Prompt Input -->
-          <div class="prompt-wrapper">
-            <label for="prompt-input">Essay prompt for GPT</label>
-            <textarea id="prompt-input" placeholder="Type or copy/paste your prompt"></textarea>
-          </div>
-
-          <!-- Source Text Input -->
-          <div class="source-wrapper">
-            <label for="source-input">Source text to write essay</label>
-            <textarea id="source-input" placeholder="Type or copy/paste your source text"></textarea>
+          <div>
+            <label for="essay-input">STEP 2: Enter Essay Prompt</label>
+            <textarea class="essay-prompt" id="essay-input" placeholder="Essay Prompt."></textarea>
           </div>
 
           <!-- Submit Button -->
-          <div class="submit-wrapper">
-            <button id="submit-button">Submit to ReWrite</button>
+          <button class="submit-button" id="sub-but">STEP 3: Submit to ReWrite</button>
+
+          <!-- Response Section -->
+          <div class="step-4-container">
+            <label for="response">STEP 4: Edit Essay</label>
+            <button class="toggle-button CT-hide" id="highlight-toggle">
+              <i class="fas fa-eye"></i>
+              <span class="text">Show your edits!</span>
+            </button>
           </div>
+          <div class="response-box CT-hide" id="response-input"><p>ReWrite's Response</p></div>
         </div>
 
-        <!-- WRITING PANEL -->
-        <div class="center-panel">
-          <!-- CONTROLS -->
-          <div class="controls-wrapper">
-            <!-- DISPLAY CONTROLS -->
-            <fieldset class="display-wrapper">
-              <legend>Options</legend>
+        <!-- Right Section: Evaluation & Feedback -->
+        <div class="right-section">
+          <!-- Refresh Button -->
+          <button class="refresh-button" id="refresh-but">STEP 5: Evaluate Essay</button>
 
-              <!-- SHOW EDITS -->
-              <button class="CT-hide" id="highlight-button">
-                <i class="fas fa-eye"></i>
-                <span class="text">Show your edits!</span>
-              </button>
-            </fieldset>
+          <div class="table-chart-container">
+            <!-- Flag Summary Table -->
+            <table id="flag-summary-table">
+              <caption id="table-title">
+                Flag Summary 🚩
+              </caption>
+              <tr>
+                <th class="clarify">Clarify!</th>
+                <td id="clarify" class="clarify">0</td>
+                <th class="assert">ASSERT!</th>
+                <td id="assert" class="assert">0</td>
+              </tr>
+              <tr>
+                <th class="factcheck">Fact-Check!</th>
+                <td id="factcheck" class="factcheck">0</td>
+                <th class="exemplify">Exemplify!</th>
+                <td id="exemplify" class="exemplify">0</td>
+              </tr>
+              <tr>
+                <th class="simplify" colspan="2">Simplify!</th>
+                <td id="simplify" class="simplify" colspan="2">0</td>
+              </tr>
+            </table>
 
-            <!-- EVALUATE ESSAY -->
-            <div class="evaluate-wrapper">
-              <button id="evaluate-button">Evaluate essay</button>
+            <!-- Bar Chart -->
+            <div class="chart-container">
+              <svg id="bar-chart" width="100%" height="100%"></svg>
             </div>
           </div>
-
-          <!-- ESSAY -->
-          <div class="essay-wrapper">
-            <div id="essay-content" class="essay-content CT-hide" contenteditable="true"><p>ReWrite's Response</p></div>
-          </div>
-        </div>
-
-        <!-- FEEDBACK PANEL -->
-        <div class="right-panel">
-          <!-- FLAGS WRAPPER -->
-          <div class="flag-title">Flag Summary 🚩</div>
-
-          <!-- Explanatory Message -->
-          <div class="flag-explanation">
-            ⭐ Address each flag to increase your score and sound more like a human! ⭐
-          </div>
-
-          <!-- FLAG TABLE -->
-          <div class="flag-table">
-            <div>
-              <div>Clarify!</div>
-              <div id="clarify-value">0</div>
-            </div>
-            <div>
-              <div>Assert!</div>
-              <div id="assert-value">0</div>
-            </div>
-            <div>
-              <div>Fact-Check!</div>
-              <div id="factcheck-value">0</div>
-            </div>
-            <div>
-              <div>Exemplify!</div>
-              <div id="exemplify-value">0</div>
-            </div>
-            <div>
-              <div>Simplify!</div>
-              <div id="simplify-value">0</div>
-            </div>
-          </div>
-
-          <!-- FLAG CHART -->
-          <div class="flag-chart">
-            <svg id="bar-chart" width="100%" height="100%"></svg>
-          </div>
-
-          <!-- EDIT TABLE -->
           <div class="edit-table-container">
             <!-- Flag Tracker Table -->
             <table id="edit-table">
@@ -162,6 +137,11 @@
               </thead>
               <tbody></tbody>
             </table>
+          </div>
+
+          <!-- Explanatory Message -->
+          <div class="explanation">
+            <p>⭐ Address each flag to increase your score and sound more like a human! ⭐</p>
           </div>
         </div>
       </div>
