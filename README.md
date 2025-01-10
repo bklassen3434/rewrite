@@ -19,7 +19,7 @@ Windows:
 1. Create a virtual environment (e.g., `py -m venv venv`)
 2. Activate env (e.g., `venv\scripts\active`)
 3. Install packages (e.g., `python -m pip install -r requirements.txt`)
-4. Run program (e.g., `python chatgpt_api.py`)
+4. Run program (e.g., `python main.py`)
 
 MacOS/Linux:
 
