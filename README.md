@@ -26,7 +26,7 @@ MacOS/Linux:
 1. Create a virtual environment (e.g., `python3 -m venv venv`)
 2. Activate env (e.g., `source venv/bin/activate`)
 3. Install packages (e.g., `python -m pip install -r requirements.txt`)
-4. Run program (e.g., `python chatgpt_api.py`)
+4. Run program (e.g., `python main.py`)
 
 ### 2 | Interface
 
